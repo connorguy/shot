@@ -1,0 +1,49 @@
+{
+  "name": "shot",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Timeline editor for programmatic HTML films: retime and reorder scenes, add Gemini voiceover and music, export MP4.",
+  "license": "BUSL-1.1",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/connorguy/shot.git"
+  },
+  "homepage": "https://github.com/connorguy/shot",
+  "bin": {
+    "shot": "bin/shot.mjs"
+  },
+  "engines": {
+    "node": ">=22.18"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "typecheck": "tsc --noEmit",
+    "new": "node scripts/new-project.ts",
+    "open": "node scripts/open.ts",
+    "template": "node scripts/template.ts",
+    "inspect": "node scripts/inspect.ts",
+    "frame": "node scripts/frame.ts",
+    "vo": "node scripts/vo.ts",
+    "music": "node scripts/music.ts",
+    "render": "node scripts/render.ts",
+    "bundle": "node scripts/bundle.ts",
+    "pack-skill": "node scripts/pack-skill.ts"
+  },
+  "dependencies": {
+    "@fontsource-variable/inter": "^5.3.0",
+    "google-auth-library": "^11.1.0",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.0.0",
+    "playwright-core": "^1.63.0",
+    "typescript": "^6.0.3",
+    "vite": "^8.3.0"
+  }
+}

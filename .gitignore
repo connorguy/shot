@@ -1,0 +1,46 @@
+# dependencies and builds
+node_modules/
+dist/
+
+# local state
+.cache/
+.env
+.env.*
+!.env.example
+
+# projects live anywhere on disk; keep the default folder and anything a project renders out of git
+projects/*
+!projects/.gitkeep
+**/exports/
+**/.history/
+**/.frames/
+
+# generated or uploaded media never belongs in the repo
+*.wav
+*.mp3
+*.m4a
+*.aac
+*.aif
+*.aiff
+*.flac
+*.ogg
+*.mp4
+*.mov
+
+# templates you save from the studio stay on your machine; only the shipped ones are tracked
+templates/films/*
+!templates/films/README.md
+!templates/films/starter/
+!templates/films/hardware-type/
+
+# agent settings
+.claude/
+
+# OS / editors / logs
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.log
+npm-debug.log*

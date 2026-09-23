@@ -1,0 +1,98 @@
+{
+  "version": 1,
+  "name": "Hardware type",
+  "film": "film.html",
+  "fps": 30,
+  "width": 1920,
+  "height": 1080,
+  "clips": [
+    {
+      "id": "c_qnrdrkg",
+      "scene": "hello",
+      "in": 0,
+      "out": 2.6,
+      "duration": 2.6,
+      "xfade": 0
+    },
+    {
+      "id": "c_fuullu9",
+      "scene": "code",
+      "in": 0,
+      "out": 3,
+      "duration": 3,
+      "xfade": 0.25
+    },
+    {
+      "id": "c_0ix3tet",
+      "scene": "knobs",
+      "in": 0,
+      "out": 3,
+      "duration": 3,
+      "xfade": 0.25
+    },
+    {
+      "id": "c_25silvw",
+      "scene": "voice",
+      "in": 0,
+      "out": 3,
+      "duration": 3,
+      "xfade": 0.25
+    },
+    {
+      "id": "c_eksssrc",
+      "scene": "ship",
+      "in": 0,
+      "out": 3.4,
+      "duration": 3.4,
+      "xfade": 0.25
+    }
+  ],
+  "tracks": [
+    {
+      "id": "vo",
+      "kind": "vo",
+      "name": "Voiceover",
+      "gain": 0,
+      "mute": false,
+      "solo": false,
+      "duck": null,
+      "clips": []
+    },
+    {
+      "id": "music",
+      "kind": "music",
+      "name": "Music",
+      "gain": -6,
+      "mute": false,
+      "solo": false,
+      "duck": {
+        "enabled": true,
+        "amount": -12,
+        "attack": 0.25,
+        "release": 0.6
+      },
+      "clips": []
+    },
+    {
+      "id": "sfx",
+      "kind": "sfx",
+      "name": "SFX",
+      "gain": 0,
+      "mute": false,
+      "solo": false,
+      "duck": null,
+      "clips": []
+    }
+  ],
+  "voice": {
+    "provider": "gemini",
+    "model": "gemini-3.8-flash-tts",
+    "voice": "Kore",
+    "style": ""
+  },
+  "voices": [],
+  "master": {
+    "gain": 0
+  },
+  "seedVo": true
+}

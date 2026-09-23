@@ -1,0 +1,14 @@
+/* shot demo film: aluminum, ink, one orange, knob-cap colors */
+@font-face { font-family: "Inter"; src: url(assets/fonts/inter.woff2) format("woff2"); font-weight: 100 900; font-display: block; }
+:root { --bg: #e2e2df; --ink: #131312; --muted: #6a6964; --orange: #f2541b; --navy: #26324f; --tan: #a9865c; --grey: #7f7f7c; --lcd: #141413; --lcd-ink: #f0efe9; }
+.fk-stage { font-family: "Inter", system-ui, sans-serif; color: var(--ink); background: var(--bg); -webkit-font-smoothing: antialiased; }
+.abs { position: absolute; left: 0; top: 0; }
+.big { font-weight: 300; letter-spacing: -0.045em; line-height: 1; white-space: nowrap; }
+.cap { font-size: 30px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); white-space: nowrap; }
+.mark { border-radius: 26%; background: var(--lcd); }
+.dotc { position: absolute; border-radius: 50%; }
+.lcd { position: absolute; background: var(--lcd); color: var(--lcd-ink); border-radius: 22px; font-family: ui-monospace, "SF Mono", Menlo, monospace; box-shadow: inset 0 3px 10px rgba(0,0,0,.6); }
+.knob { position: absolute; border-radius: 50%; background: #f7f6f2; box-shadow: 0 10px 24px rgba(19,19,18,.14), inset 0 -3px 0 rgba(0,0,0,.06); }
+.knob i { position: absolute; border-radius: 50%; box-shadow: inset 0 -6px 10px rgba(0,0,0,.25), 0 4px 8px rgba(0,0,0,.18); }
+.knob b { position: absolute; width: 6px; border-radius: 3px; background: rgba(255,255,255,.85); }
+.bar { position: absolute; border-radius: 6px; }

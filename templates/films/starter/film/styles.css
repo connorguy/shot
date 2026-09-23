@@ -1,0 +1,7 @@
+/* Film styles. Put brand tokens on :root and give each scene its own class prefix. */
+:root { --bg: #f7f7f5; --ink: #18150e; --muted: rgba(24, 21, 14, .55); --accent: #f76b15; }
+.fk-stage { font-family: "Inter", system-ui, -apple-system, sans-serif; color: var(--ink); background: var(--bg); -webkit-font-smoothing: antialiased; }
+.abs { position: absolute; left: 0; top: 0; }
+.headline { font-size: 120px; font-weight: 600; letter-spacing: -0.045em; line-height: 1; white-space: nowrap; }
+.sub { font-size: 36px; color: var(--muted); white-space: nowrap; }
+.dot { position: absolute; left: 0; top: 0; border-radius: 50%; background: var(--accent); }

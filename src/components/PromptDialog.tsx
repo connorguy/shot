@@ -21,7 +21,6 @@ export function PromptDialog() {
   const target = useStore((s) => s.promptFor);
   const tl = useStore((s) => s.timeline);
   const manifest = useStore((s) => s.manifest);
-  const status = useStore((s) => s.status);
   const dir = useStore((s) => s.projects.find((p) => p.name === s.project)?.dir);
   const dlg = useRef<HTMLDialogElement>(null);
   const [ask, setAsk] = useState("");
@@ -34,7 +33,7 @@ export function PromptDialog() {
     if (!target && d.open) d.close();
   }, [target]);
 
-  const ctx: PromptCtx | null = tl && dir && status ? { tl, manifest, dir, studio: status.studioRoot } : null;
+  const ctx: PromptCtx | null = tl && dir ? { tl, manifest, dir } : null;
   const text = ctx && target ? buildPrompt(ctx, target, ask) : "";
 
   const copy = async () => {
@@ -53,7 +52,7 @@ export function PromptDialog() {
   return (
     <dialog ref={dlg} className="export prompt" onClose={() => setState({ promptFor: null })}>
       <h3>Prompt an agent</h3>
-      {ctx && target && <p>Change {promptTitle(ctx, target)}. The copied prompt includes the project path, the file and the timing, so the agent starts in the right place.</p>}
+      {ctx && target && <p>Change {promptTitle(ctx, target)}. The prompt adds the project, file and timing.</p>}
       <label>What should change?
         <textarea
           autoFocus rows={4} value={ask}

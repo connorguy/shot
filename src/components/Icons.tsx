@@ -22,6 +22,8 @@ const paths: Record<string, string> = {
   pencil: "M10.5 2.5l3 3L6 13H3v-3zM9 4l3 3",
   folder: "M2 4.5A1.5 1.5 0 0 1 3.5 3H6l1.5 1.5h5A1.5 1.5 0 0 1 14 6v5.5A1.5 1.5 0 0 1 12.5 13h-9A1.5 1.5 0 0 1 2 11.5z",
   copy: "M5.5 5.5h7v7h-7zM3.5 10.5v-7h7",
+  panelLeft: "M2.5 3h11v10h-11zM6.5 3v10",
+  panelRight: "M2.5 3h11v10h-11zM9.5 3v10",
 };
 
 export function Icon({ name, size = 16 }: { name: keyof typeof paths | string; size?: number }) {

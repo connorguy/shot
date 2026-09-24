@@ -10,13 +10,23 @@ Site: [connorguy.github.io/shot](https://connorguy.github.io/shot) (source in [`
 
 ## Roll camera
 
+Paste this into Claude Code or Codex:
+
+```text
+Install Shot for me: clone https://github.com/connorguy/shot to ~/shot and follow its SETUP.md.
+```
+
+Your agent checks for Node, Chrome and ffmpeg, installs Shot, sets up voice if you want it, adds the film-design skill and opens the studio. The steps it follows are in [SETUP.md](SETUP.md).
+
+Then press **New**. That's most of the manual.
+
+### By hand
+
 ```sh
 git clone https://github.com/connorguy/shot.git
 cd shot && npm install
 npm run dev        # → http://localhost:5178
 ```
-
-Then press **New**. That's most of the manual.
 
 You'll need Node 22.18+, Google Chrome and ffmpeg (`brew install ffmpeg`). `npm link` gives you a `shot` command if you like typing less.
 
@@ -42,7 +52,7 @@ More on the pipeline in [PIPELINE.md](PIPELINE.md). The scene contract is in [fi
 
 ## Things worth knowing
 
-- **Agents are first-class.** Every project gets an `AGENTS.md` explaining how it works. Press **P** on any clip, line or frame to copy a prompt that already knows the file, the timing and the frame. The studio reloads when files change on disk.
+- **Agents are first-class.** Every project gets an `AGENTS.md` (Codex) and a `CLAUDE.md` (Claude Code), so an agent started in the project folder already knows the scene contract, the timeline and the tools. Press **P** on any clip, line or frame to copy a short prompt with the exact file and timing. The studio reloads when files change on disk.
 - **Voiceover lands on the frame.** Drag a line to the length you want. Gemini or ElevenLabs paces the read toward that length, and a pitch-safe stretch fixes whatever's left. Every take is kept.
 - **Music ducks by itself** under every line.
 - **Templates** keep a film's look and cut but none of its audio. Use **Save as template** in the inspector, and pick one from **New**.
@@ -50,7 +60,7 @@ More on the pipeline in [PIPELINE.md](PIPELINE.md). The scene contract is in [fi
 - **Undo is deep.** Use ⌘Z. The last 40 saves are kept in `.history/`.
 - **Films are code.** A design runs in your browser, next to the studio, so only open designs you trust.
 
-Keys: `T` trim · `S` split · `H` hold · `P` prompt · `⌥` no snapping · `⇧` swap retime/trim.
+Keys: `T` trim · `S` split · `H` hold · `P` prompt · `[` `]` hide side panels · `⌥` no snapping · `⇧` swap retime/trim.
 
 ## CLI
 

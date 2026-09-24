@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { emptyTimeline, seedVoFromManifest, timelineFromManifest } from "../shared/timeline.ts";
 import { addHold, addVoLine, deleteSelection, duplicateSelection, splitAt } from "./lib/actions.ts";
 import { api } from "./lib/api.ts";
-import { adoptExternal, canRedo, canUndo, getState, loadTimeline, redo, saveNow, setState, toast, undo, useStore } from "./lib/store.ts";
+import { adoptExternal, canRedo, canUndo, getState, loadTimeline, redo, saveNow, setState, toast, togglePanel, undo, useStore } from "./lib/store.ts";
 import * as transport from "./lib/transport.ts";
 import { AudioPanel } from "./components/AudioPanel.tsx";
 import { ExportDialog } from "./components/ExportDialog.tsx";
@@ -40,6 +40,8 @@ export function App() {
   const manifest = useStore((s) => s.manifest);
   const tl = useStore((s) => s.timeline);
   const panel = useStore((s) => s.panel);
+  const showSide = useStore((s) => s.showSide);
+  const showInspect = useStore((s) => s.showInspect);
   const save = useStore((s) => s.save);
   const toastMsg = useStore((s) => s.toast);
   const status = useStore((s) => s.status);
@@ -122,6 +124,8 @@ export function App() {
       if (k === "l") return run(() => setState({ loop: !getState().loop }));
       if (k === "p") return run(() => promptForSelection(playhead.get()));
       if (k === "z") return run(() => window.dispatchEvent(new Event("studio:fit")));
+      if (k === "[") return run(() => togglePanel("showSide"));
+      if (k === "]") return run(() => togglePanel("showInspect"));
       if (k === "escape") return run(() => setState({ sel: null }));
     };
     window.addEventListener("keydown", onKey);
@@ -160,6 +164,16 @@ export function App() {
         <button className="icon" disabled={!canRedo()} onClick={redo} title="Redo (⇧⌘Z)">↷</button>
         <span className={`save ${save}`}>{save === "saved" ? "Saved" : save === "saving" ? "Saving…" : save === "dirty" ? "Edited" : "Save failed"}</span>
         <div className="grow" />
+        {project && (
+          <span className="path-btns">
+            <button className={`icon ${showSide ? "on" : ""}`} onClick={() => togglePanel("showSide")} title={`${showSide ? "Hide" : "Show"} scenes, voiceover and music ([)`} aria-pressed={showSide}>
+              <Icon name="panelLeft" />
+            </button>
+            <button className={`icon ${showInspect ? "on" : ""}`} onClick={() => togglePanel("showInspect")} title={`${showInspect ? "Hide" : "Show"} inspector (])`} aria-pressed={showInspect}>
+              <Icon name="panelRight" />
+            </button>
+          </span>
+        )}
         {status && (
           <span className="status">
             <i
@@ -185,8 +199,8 @@ export function App() {
           </div>
         </div>
       ) : (
-        <main className="workspace">
-          <aside className="side">
+        <main className={`workspace${showSide ? "" : " no-side"}${showInspect ? "" : " no-inspect"}`}>
+          {showSide && <aside className="side">
             <nav className="tabs">
               {(["scenes", "script", "audio"] as const).map((p) => (
                 <button key={p} className={panel === p ? "on" : ""} onClick={() => setState({ panel: p })}>
@@ -199,9 +213,9 @@ export function App() {
               {panel === "script" && <ScriptPanel />}
               {panel === "audio" && <AudioPanel />}
             </div>
-          </aside>
+          </aside>}
           <section className="center"><Preview /></section>
-          <aside className="inspect"><Inspector /></aside>
+          {showInspect && <aside className="inspect"><Inspector /></aside>}
           <section className="bottom"><Timeline /></section>
         </main>
       )}

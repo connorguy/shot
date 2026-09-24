@@ -294,7 +294,7 @@ function ProjectInspector({ tl }: { tl: Timeline }) {
         <b>Keys</b>
         <span><kbd>Space</kbd> play</span><span><kbd>←</kbd><kbd>→</kbd> frame</span><span><kbd>⇧←</kbd><kbd>⇧→</kbd> 1 s</span>
         <span><kbd>S</kbd> split</span><span><kbd>H</kbd> hold</span><span><kbd>V</kbd> VO line</span><span><kbd>R</kbd>/<kbd>T</kbd> retime / trim</span>
-        <span><kbd>P</kbd> prompt an agent</span><span><kbd>⌫</kbd> delete</span><span><kbd>⌘D</kbd> duplicate</span><span><kbd>⌘Z</kbd> undo</span><span><kbd>Z</kbd> fit</span><span><kbd>⌥</kbd>-drag no snap</span>
+        <span><kbd>P</kbd> prompt an agent</span><span><kbd>⌫</kbd> delete</span><span><kbd>⌘D</kbd> duplicate</span><span><kbd>⌘Z</kbd> undo</span><span><kbd>Z</kbd> fit</span><span><kbd>[</kbd><kbd>]</kbd> panels</span><span><kbd>⌥</kbd>-drag no snap</span>
       </div>
       <div className="btn-row">
         <PromptButton target={{ kind: "project" }} className="" label="✎ Prompt an agent about the film…" />

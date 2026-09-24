@@ -205,11 +205,13 @@ h1, h2, h3 { font-weight: 300; letter-spacing: -0.035em; margin: 0; }
 .lcdblock { background: var(--lcd); color: var(--lcd-ink); border-radius: 16px; padding: 24px 26px; font: 400 15px/1.9 var(--mono); position: relative; box-shadow: inset 0 2px 10px rgba(0, 0, 0, .7); margin-top: 32px; overflow-x: auto; }
 .lcdblock .d { color: var(--lcd-dim); }
 .lcdblock .p { color: var(--orange); user-select: none; }
+.lcdblock .src { padding-right: 64px; overflow-wrap: anywhere; }
 .copy { position: absolute; right: 14px; top: 14px; background: #2a2a27; color: var(--lcd-ink); border: 1px solid #3a3a36; border-radius: 8px; padding: 5px 10px; font: 500 12px var(--mono); cursor: pointer; }
 .copy:hover { background: #33332f; }
 .manual { display: inline-block; margin-top: 30px; font-size: 20px; color: var(--link); text-decoration: none; }
 .manual:hover { text-decoration: underline; text-underline-offset: 4px; }
 .needs { margin-top: 26px; }
+.needs + .lcdblock { margin-top: 12px; }
 
 footer { padding: 48px 24px 64px; }
 footer .wrap { border: 0; display: flex; gap: 28px; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; font-size: 14px; color: var(--muted); font-weight: 400; }
@@ -234,6 +236,8 @@ footer p { margin: 0 0 6px; }
   .fields .tc b { font-size: 24px; }
   .controls { flex-wrap: wrap; }
   .speeds { margin-left: 0; }
+  .lcdblock { padding: 52px 20px 20px; font-size: 14px; }
+  .lcdblock .src { padding-right: 0; }
 }
 </style>
 </head>
@@ -357,7 +361,7 @@ footer p { margin: 0 0 6px; }
         <div class="cell">
           <div class="label">reel 4 of 6</div>
           <h2>agents<small>your robots already read the manual</small></h2>
-          <p class="lede">every project ships with an AGENTS.md. point any coding agent at the folder and it knows the scene contract, the timeline and the tools. press P on anything in the studio to copy a prompt that already knows the file, the timing and the frame.</p>
+          <p class="lede">every project ships with an AGENTS.md. point any coding agent at the folder and it knows the scene contract, the timeline and the tools. press P on anything in the studio to copy a short prompt with the exact file and timing.</p>
           <ul class="specs"><li>AGENTS.md in every project</li><li>prompt from any frame</li><li>a cli for everything</li><li>studio reloads live</li></ul>
         </div>
         <div class="cell art"><div class="term" id="term" aria-hidden="true"></div></div>
@@ -443,12 +447,14 @@ footer p { margin: 0 0 6px; }
     <section class="row get" id="get" style="border-top:1px solid var(--line)">
       <div class="cell">
         <div class="label">get it</div>
-        <h2>three lines.</h2>
-        <p class="lede" style="font-size:20px">then press new. that's the whole manual. (there is also a real manual.)</p>
+        <h2>one line.</h2>
+        <p class="lede" style="font-size:20px">paste it into claude code or codex. your agent installs shot, sets up voice if you want it, adds the film-design skill and opens the studio. then press new. that's the whole manual. (there is also a real manual.)</p>
         <a class="manual" data-repo data-path="#readme" href="#">read the manual →</a>
       </div>
       <div class="cell">
-        <div class="lcdblock"><button class="copy" id="copy">copy</button><div id="install"><span class="p">$ </span>git clone <span data-repo-text>https://github.com/connorguy/shot</span>.git<br><span class="p">$ </span>cd shot &amp;&amp; npm install<br><span class="p">$ </span>npm run dev <span class="d"># → http://localhost:5178</span></div></div>
+        <div class="lcdblock"><button class="copy">copy</button><div class="src"><span class="p">&gt; </span>Install Shot for me: clone <span data-repo-text>https://github.com/connorguy/shot</span> to ~/shot and follow its SETUP.md.</div></div>
+        <p class="needs label">or by hand, in three:</p>
+        <div class="lcdblock"><button class="copy">copy</button><div class="src"><span class="p">$ </span>git clone <span data-repo-text>https://github.com/connorguy/shot</span>.git<br><span class="p">$ </span>cd shot &amp;&amp; npm install<br><span class="p">$ </span>npm run dev <span class="d"># → http://localhost:5178</span></div></div>
         <p class="needs label">needs node 22.18+, google chrome and ffmpeg (brew install ffmpeg). gemini voice and music need an api key or gcloud adc.</p>
       </div>
     </section>
@@ -647,11 +653,11 @@ function typeTerm() {
 }
 
 // copy install
-document.getElementById("copy").addEventListener("click", async (e) => {
-  const text = document.getElementById("install").innerText.replace(/^\$ /gm, "").replace(/\s+# .*$/gm, "");
-  try { await navigator.clipboard.writeText(text); e.target.textContent = "copied"; } catch { e.target.textContent = "select + copy"; }
-  setTimeout(() => (e.target.textContent = "copy"), 1600);
-});
+document.querySelectorAll(".lcdblock .copy").forEach((b) => b.addEventListener("click", async () => {
+  const text = b.parentElement.querySelector(".src").innerText.replace(/^[$>] /gm, "").replace(/\s+# .*$/gm, "");
+  try { await navigator.clipboard.writeText(text); b.textContent = "copied"; } catch { b.textContent = "select + copy"; }
+  setTimeout(() => (b.textContent = "copy"), 1600);
+}));
 </script>
 </body>
 </html>

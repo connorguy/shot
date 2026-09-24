@@ -25,6 +25,8 @@ export interface State {
   playing: boolean;
   loop: boolean;
   panel: SidePanel;
+  showSide: boolean; // left panel (scenes, voiceover, music)
+  showInspect: boolean; // right panel (inspector)
   save: "saved" | "saving" | "dirty" | "error";
   status: Status | null;
   elevenVoices: ElevenVoice[] | null; // loaded when the ElevenLabs engine is picked
@@ -46,9 +48,19 @@ export type PromptTarget =
   | { kind: "frame"; t: number }
   | { kind: "project" };
 
+// which side panels are open, remembered per browser
+const LAYOUT_KEY = "shot.layout";
+function savedLayout(): Pick<State, "showSide" | "showInspect"> {
+  const d = { showSide: true, showInspect: true };
+  try {
+    const v = JSON.parse(localStorage.getItem(LAYOUT_KEY) || "{}");
+    return { showSide: v.showSide ?? d.showSide, showInspect: v.showInspect ?? d.showInspect };
+  } catch { return d; }
+}
+
 let state: State = {
   project: null, timeline: null, manifest: null, filmVersion: null, filmError: null, sel: null,
-  tool: "retime", snap: true, zoom: 60, playing: false, loop: false, panel: "scenes", save: "saved",
+  tool: "retime", snap: true, zoom: 60, playing: false, loop: false, panel: "scenes", ...savedLayout(), save: "saved",
   status: null, elevenVoices: null, busy: {}, toast: null, exportOpen: false, assetsVersion: 0, diskTimeline: null,
   projects: [], newOpen: false, promptFor: null, saveTplOpen: false,
 };
@@ -61,6 +73,11 @@ export function setState(patch: Partial<State> | ((s: State) => Partial<State>))
   state = { ...state, ...p };
   emit();
 }
+export function togglePanel(which: "showSide" | "showInspect") {
+  setState((s) => ({ [which]: !s[which] }));
+  try { localStorage.setItem(LAYOUT_KEY, JSON.stringify({ showSide: state.showSide, showInspect: state.showInspect })); } catch {}
+}
+
 const subscribe = (l: () => void) => { listeners.add(l); return () => listeners.delete(l); };
 export function useStore<T>(sel: (s: State) => T): T {
   return useSyncExternalStore(subscribe, () => sel(state));

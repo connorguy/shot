@@ -31,6 +31,8 @@ Two kinds of work happen here. Find out which one you're doing first.
 | Audio: one `schedule()` for live preview and offline export mix | `src/audio/engine.ts` |
 | Preview iframe, timeline, panels | `src/components/*` |
 | Headless hooks for `npm run render` | `src/lib/headless.ts` |
+| "Prompt an agent" text (P key): kept short, since the project's `AGENTS.md` covers the rest | `src/lib/prompt.ts` |
+| Agent-run install that the README and site one-liner point at. Keep it in step with install steps and CLI changes | `SETUP.md` |
 
 ## Invariants
 

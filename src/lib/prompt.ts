@@ -1,7 +1,7 @@
 // "Prompt an agent": turn what the user is looking at plus their ask into a paste-ready prompt with
 // exact paths, ids and times, so a coding agent can make the change without rediscovering context.
 import {
-  clipIndexAt, clipStarts, layersAt, rateOf, resolveAudio, speedOf, totalDuration,
+  clipIndexAt, clipStarts, layersAt, rateOf, resolveAudio, speedOf, totalDuration, voiceOf,
   type FilmManifest, type Timeline,
 } from "../../shared/timeline.ts";
 import type { PromptTarget } from "./store.ts";
@@ -87,7 +87,8 @@ function describe(c: PromptCtx, target: PromptTarget): { what: string; context: 
     if (a.vo) {
       context.push(`Voiceover line ${a.id} in timeline.json (tracks[kind=vo]): “${a.vo.text}”.`);
       context.push(`Plays ${s2(r.start)}–${s2(r.end)}${a.anchor ? `, pinned ${a.anchor.offset}s into picture clip ${a.anchor.clip}` : ""}${a.vo.target ? `, target length ${a.vo.target}s` : ""}${rateOf(a) !== 1 ? `, ${pct(rateOf(a))} speed` : ""}; ${a.vo.takes.length} take(s)${r.placeholder ? ", none generated yet" : ""}.`);
-      context.push(`Voice ${a.vo.voice || `${c.tl.voice.voice} (project default)`}${a.vo.style || c.tl.voice.style ? `, style “${a.vo.style ?? c.tl.voice.style}”` : ""}.`);
+      const v = voiceOf(c.tl, a);
+      context.push(`Voice ${v.voice}${v.voice === a.vo.voice ? "" : " (project default)"} on ${c.tl.voice.provider}${v.style ? `, style “${v.style}”` : ""}.`);
       context.push(`After changing the text, generate a take: npm --prefix "${c.studio}" run vo -- "${c.dir}" --line ${a.id}`);
     } else {
       context.push(`${r.track.name} clip ${a.id} in timeline.json: ${a.asset}, ${s2(r.start)}–${s2(r.end)}, gain ${a.gain} dB, fades ${a.fadeIn}/${a.fadeOut}s${rateOf(a) !== 1 ? `, ${pct(rateOf(a))} speed` : ""}.`);

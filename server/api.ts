@@ -7,6 +7,7 @@ import { extname, join } from "node:path";
 import type { Provider, Timeline } from "../shared/timeline.ts";
 import { thumbnail } from "./chrome.ts";
 import { cancelJob, getJob, hasFfmpeg, startExport } from "./export.ts";
+import { elevenAvailable, listVoices } from "./elevenlabs.ts";
 import { authStatus, designVoice } from "./gemini.ts";
 import { makeMusic, makeTake, stretched } from "./media.ts";
 import { listTemplates, saveTemplate, templateDir } from "./templates.ts";
@@ -66,7 +67,7 @@ export function createApi(ctx: Ctx) {
 
   on("GET", /^\/api\/status$/, async (_m, _q, res) => {
     const auth = await authStatus();
-    send(res, 200, { gemini: auth.mode !== "none", auth, say: sayAvailable(), ffmpeg: await hasFfmpeg(), projectsDir: ctx.projectsDir, studioRoot: ctx.root.replace(/\/+$/, "") });
+    send(res, 200, { gemini: auth.mode !== "none", auth, elevenlabs: elevenAvailable(), say: sayAvailable(), ffmpeg: await hasFfmpeg(), projectsDir: ctx.projectsDir, studioRoot: ctx.root.replace(/\/+$/, "") });
   });
 
   on("GET", /^\/api\/projects$/, async (_m, _q, res) => send(res, 200, await listProjects(ctx)));
@@ -169,12 +170,14 @@ export function createApi(ctx: Ctx) {
 
   on("POST", /^\/api\/projects\/([^/]+)\/tts$/, async (m, req, res) => {
     const b = await readJson(req);
-    const provider: Provider = b.provider === "say" ? "say" : "gemini";
+    const provider: Provider = b.provider === "say" || b.provider === "elevenlabs" ? b.provider : "gemini";
     const take = await makeTake(ctx, m[1], {
       clipId: b.clipId, text: String(b.text || ""), voice: b.voice, style: b.style || "", model: b.model, provider, target: Number(b.target) || null,
     });
     send(res, 200, { take });
   });
+
+  on("GET", /^\/api\/elevenlabs\/voices$/, async (_m, _q, res, url) => send(res, 200, await listVoices(url.searchParams.get("fresh") === "1")));
 
   on("POST", /^\/api\/projects\/([^/]+)\/voices$/, async (m, req, res) => {
     const b = await readJson(req);

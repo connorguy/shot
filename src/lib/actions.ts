@@ -1,6 +1,6 @@
 // Timeline operations shared by the toolbar, inspector, panels and keyboard shortcuts.
 import {
-  applyTake, audioStart, clipIndexAt, clipStarts, newVoClip, resolveAudio, sourceAt, uid, voiceOf,
+  applyTake, audioStart, clipIndexAt, clipStarts, engineOf, newVoClip, resolveAudio, sourceAt, uid, voiceOf,
   type AudioClip, type AudioTrack, type Timeline, type TrackKind, type VideoClip,
 } from "../../shared/timeline.ts";
 import { api } from "./api.ts";
@@ -191,15 +191,19 @@ export async function generateTake(clipId: string) {
   const f = findAudio(tl, clipId);
   if (!f?.clip.vo) return;
   const { voice, style } = voiceOf(tl, f.clip);
-  const provider = tl.voice.provider;
+  const { provider, model } = engineOf(tl);
   if (provider === "gemini" && !s.status?.gemini) {
     toast("No Gemini credentials. Run `gcloud auth application-default login` (ADC) or add GEMINI_API_KEY to shot/.env, then restart. Or switch the engine to Draft (macOS say).", "error");
+    return;
+  }
+  if (provider === "elevenlabs" && !s.status?.elevenlabs) {
+    toast("No ElevenLabs key. Add ELEVENLABS_API_KEY to shot/.env, then restart. Or switch the engine.", "error");
     return;
   }
   const tg = f.clip.vo.target;
   setBusy(clipId, `${provider === "say" ? "Drafting" : "Generating"}${tg ? ` to ${tg.toFixed(1)}s` : ""}…`);
   try {
-    const { take } = await api.tts(project, { clipId, text: f.clip.vo.text, voice, style, model: tl.voice.model, provider, target: f.clip.vo.target ?? null });
+    const { take } = await api.tts(project, { clipId, text: f.clip.vo.text, voice, style, model, provider, target: f.clip.vo.target ?? null });
     edit((d) => {
       const g = findAudio(d, clipId);
       if (!g?.clip.vo) return;
@@ -214,6 +218,17 @@ export async function generateTake(clipId: string) {
 }
 
 export { applyTake };
+
+/** The ElevenLabs voices this key can use, for the voice pickers. `fresh` skips the server's 5-minute cache. */
+let loadingVoices: Promise<void> | null = null;
+export function loadElevenVoices(fresh = false) {
+  if (loadingVoices && !fresh) return loadingVoices;
+  loadingVoices = api.elevenVoices(fresh)
+    .then((elevenVoices) => setState({ elevenVoices }))
+    .catch((e) => { setState({ elevenVoices: [] }); toast(e.message, "error"); })
+    .finally(() => { loadingVoices = null; });
+  return loadingVoices;
+}
 
 export async function generateMissing() {
   const tl = getState().timeline;

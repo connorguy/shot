@@ -23,6 +23,7 @@ Two kinds of work happen here. Find out which one you're doing first.
 | HTTP API (Vite middleware), static `/files/<project>/…` | `server/api.ts` |
 | Projects: registry (`~/.shot/projects.json`, projects anywhere on disk), scaffolding from `templates/project` (fills `{{TITLE}}`, `{{NAME}}`, `{{STUDIO}}`), timeline read/write with history, versions | `server/projects.ts` |
 | Gemini: API key or ADC (Developer API, then Agent Platform fallback); TTS, voice design, Lyria | `server/gemini.ts`, `server/media.ts` |
+| ElevenLabs (optional, `ELEVENLABS_API_KEY`): TTS with speed-based pacing, voice list | `server/elevenlabs.ts`, `server/media.ts` |
 | Film templates: list, save (strips audio), cover render, apply to a new project | `server/templates.ts`, `templates/films/` |
 | Headless Chrome (thumbnails, frames), MP4 export jobs | `server/chrome.ts`, `server/export.ts` |
 | UI state (external store, snapshot undo, autosave) | `src/lib/store.ts` |
@@ -37,7 +38,7 @@ Two kinds of work happen here. Find out which one you're doing first.
 - The preview audio and the export audio must match. Both use `schedule()` in `src/audio/engine.ts`.
 - Audio clips pinned to picture clips (`anchor`) must survive split, delete and reorder. See `splitAt`, `deleteSelection` and `detachOrphans` in `actions.ts`.
 - `timeline.json` is shared with agents. Keep the schema backward compatible and extend `normalizeTimeline` when adding fields.
-- Gemini keys and ADC tokens stay server-side. The UI only learns the auth mode (`/api/status`).
+- Gemini and ElevenLabs keys and ADC tokens stay server-side. The UI only learns the auth mode (`/api/status`).
 - CLI scripts accept a project id or a folder path, resolved against `INIT_CWD` so `npm --prefix <studio> run x -- .` works from inside a project.
 - Node runs the CLI with type stripping only: no enums, namespaces or parameter properties (`erasableSyntaxOnly` enforces this).
 - Templates never carry audio, takes or designed voice ids (`templateTimeline()` in `shared/timeline.ts`). Projects made from one get `seedVo` so draft VO slots come back from the scenes.

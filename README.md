@@ -27,6 +27,8 @@ Timing work is free: drafts use the macOS `say` voice. For the real voices and m
 - **An API key.** Run `cp .env.example .env` and set `GEMINI_API_KEY`.
 - **Google ADC**, for orgs that don't allow keys. Run `gcloud auth application-default login`. If the Gemini Developer API says no, Shot falls back to Agent Platform on its own. Settings are in [`.env.example`](.env.example).
 
+Prefer ElevenLabs? Set `ELEVENLABS_API_KEY` in `.env` too, then pick it under **Voiceover → Engine**. You get Eleven v3 with audio tags like `[whispers]`, and your own cloned voices. Music still comes from Lyria.
+
 Keys and tokens stay on your machine, in the local server.
 
 ## How a film happens
@@ -41,7 +43,7 @@ More on the pipeline in [PIPELINE.md](PIPELINE.md). The scene contract is in [fi
 ## Things worth knowing
 
 - **Agents are first-class.** Every project gets an `AGENTS.md` explaining how it works. Press **P** on any clip, line or frame to copy a prompt that already knows the file, the timing and the frame. The studio reloads when files change on disk.
-- **Voiceover lands on the frame.** Drag a line to the length you want. Gemini paces the read toward that length, and a pitch-safe stretch fixes whatever's left. Every take is kept.
+- **Voiceover lands on the frame.** Drag a line to the length you want. Gemini or ElevenLabs paces the read toward that length, and a pitch-safe stretch fixes whatever's left. Every take is kept.
 - **Music ducks by itself** under every line.
 - **Templates** keep a film's look and cut but none of its audio. Use **Save as template** in the inspector, and pick one from **New**.
 - **Preview is the export.** The same frames and the same audio mix, just smaller.
@@ -59,7 +61,7 @@ npm run new -- <name> [--dir <parent>] [--from design.zip] [--template <id>]
 npm run open -- <folder>              # open a project that lives anywhere
 npm run inspect -- <p>                # cut, scenes, audio, warnings
 npm run frame -- <p> 12.5             # PNG of one moment (--sheet for all of them)
-npm run vo -- <p> [--draft] [--all]   # voice the lines
+npm run vo -- <p> [--draft] [--all]   # voice the lines (--engine elevenlabs to switch)
 npm run music -- <p> "mood"
 npm run render -- <p> [--draft]       # → exports/*.mp4
 npm run bundle -- <p>                 # → one self-contained HTML file

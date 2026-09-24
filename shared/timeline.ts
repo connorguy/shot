@@ -37,7 +37,7 @@ export interface VideoClip {
   notes?: string;
 }
 
-export type Provider = "gemini" | "say";
+export type Provider = "gemini" | "elevenlabs" | "say";
 
 export interface Take {
   id: string;
@@ -46,6 +46,7 @@ export interface Take {
   text: string;
   voice: string;
   style: string;
+  voiceName?: string; // display name when `voice` is an id (ElevenLabs)
   provider: Provider;
   model: string | null;
   createdAt: string;
@@ -101,7 +102,8 @@ export interface Timeline {
   height: number;
   clips: VideoClip[];
   tracks: AudioTrack[];
-  voice: { provider: Provider; model: string; voice: string; style: string; snapToTarget?: boolean };
+  // model/voice are Gemini's; `eleven` holds the ElevenLabs model and voice id, so switching engines keeps both
+  voice: { provider: Provider; model: string; voice: string; style: string; snapToTarget?: boolean; eleven?: { model: string; voice: string; name?: string } };
   voices: DesignedVoice[];
   master: { gain: number };
   updatedAt?: string;
@@ -109,6 +111,8 @@ export interface Timeline {
 }
 
 export const TTS_MODELS = ["gemini-3.8-flash-tts", "gemini-3.8-flash-lite-tts"] as const;
+export const ELEVEN_MODELS: [string, string][] = [["eleven_v3", "Eleven v3"], ["eleven_multilingual_v2", "Multilingual v2"], ["eleven_flash_v2_5", "Flash v2.5"]];
+export const ELEVEN_DEFAULT_VOICE = { id: "JBFqnCBsd6RMkjVDRZzb", name: "George" };
 export const MUSIC_MODELS = ["lyria-3.5", "lyria-3-clip-preview"] as const;
 export const PREBUILT_VOICES: [string, string][] = [
   ["Zephyr", "Bright"], ["Puck", "Upbeat"], ["Charon", "Informative"], ["Kore", "Firm"], ["Fenrir", "Excitable"],
@@ -125,7 +129,7 @@ export const dbToGain = (db: number) => Math.pow(10, db / 20);
 
 /** Rough read time for a VO line before any take exists (≈160 wpm plus a breath). */
 export function estimateSpeech(text: string): number {
-  const words = text.replace(/<[^>]+>/g, " ").trim().split(/\s+/).filter(Boolean).length;
+  const words = text.replace(/<[^>]+>|\[[^\]]*\]/g, " ").trim().split(/\s+/).filter(Boolean).length;
   const pauses = (text.match(/<(short|long) pause>/g) || []).length * 0.4;
   return Math.max(0.6, words / 2.65 + 0.25 + pauses);
 }
@@ -188,8 +192,25 @@ export interface ResolvedAudio {
   placeholder: boolean; // VO line with no take yet
 }
 
-export function voiceOf(tl: Timeline, c: AudioClip) {
-  return { voice: c.vo?.voice || tl.voice.voice, style: c.vo?.style ?? tl.voice.style };
+/** ElevenLabs voice ids are 20 letters and digits. Anything else is a Gemini voice (a prebuilt name, voice_…, a library name). */
+export const isElevenVoice = (v: string | null | undefined) => !!v && /^[A-Za-z0-9]{20}$/.test(v);
+
+export function elevenOf(tl: Timeline) {
+  const e = tl.voice.eleven;
+  return e?.voice ? { model: e.model || ELEVEN_MODELS[0][0], voice: e.voice, name: e.name } : { model: e?.model || ELEVEN_MODELS[0][0], voice: ELEVEN_DEFAULT_VOICE.id, name: ELEVEN_DEFAULT_VOICE.name };
+}
+
+/** The engine, model and project voice lines are generated with (the project's engine unless one is given). */
+export function engineOf(tl: Timeline, provider: Provider = tl.voice.provider) {
+  if (provider === "elevenlabs") { const e = elevenOf(tl); return { provider, model: e.model, voice: e.voice }; }
+  return { provider, model: tl.voice.model, voice: tl.voice.voice };
+}
+
+/** A line's voice and style. A line's own voice only counts when it belongs to the engine in use. */
+export function voiceOf(tl: Timeline, c: AudioClip, provider: Provider = tl.voice.provider) {
+  const own = c.vo?.voice;
+  const fits = !!own && isElevenVoice(own) === (provider === "elevenlabs");
+  return { voice: fits ? own! : engineOf(tl, provider).voice, style: c.vo?.style ?? tl.voice.style };
 }
 
 export const RATE_MIN = 0.5, RATE_MAX = 2;

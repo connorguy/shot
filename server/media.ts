@@ -4,7 +4,8 @@ import { existsSync } from "node:fs";
 import { mkdir, rename, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { promisify } from "node:util";
-import { estimateSpeech, uid, type Provider, type Take } from "../shared/timeline.ts";
+import { clamp, estimateSpeech, uid, type Provider, type Take } from "../shared/timeline.ts";
+import { elevenText, SPEED_MAX, SPEED_MIN, synthesizeEleven, voiceName } from "./elevenlabs.ts";
 import { generateMusic, synthesize } from "./gemini.ts";
 import { fileVersion, probeDuration, projectFile, slugify, type Ctx } from "./projects.ts";
 import { sayToWav } from "./say.ts";
@@ -29,8 +30,9 @@ const styleFor = (base: string, level: number, target: number | null | undefined
   [base.trim(), PACE[level], target ? `about ${target.toFixed(1)} seconds long` : ""].filter(Boolean).join(", ");
 
 /** Synthesize one line, trim silence, save it under audio/vo, and describe it as a Take.
- *  With a target, the delivery is paced toward it: one retry at an adjusted pace if the first read misses
- *  by more than 12%, keeping the closer take. (The studio then snaps the rest with a small time-stretch.) */
+ *  With a target, the delivery is paced toward it: Gemini through the style (one retry if the first read misses
+ *  by more than 12%), ElevenLabs through its speed setting (one correction), `say` through its
+ *  wpm rate. (The studio then snaps the rest with a small time-stretch.) */
 export async function makeTake(ctx: Ctx, project: string, r: TakeRequest): Promise<Take> {
   const text = r.text.trim();
   if (!text) throw new Error("Line has no text.");
@@ -55,6 +57,22 @@ export async function makeTake(ctx: Ctx, project: string, r: TakeRequest): Promi
         ? wpm * (t.dur / target)
         : 1 / (a[0] + ((target - a[1]) * (b[0] - a[0])) / (b[1] - a[1]));
     }
+  } else if (r.provider === "elevenlabs") {
+    // ElevenLabs has a real pace control (speed, 0.7–1.2): start from the estimate, then correct once from the
+    // measured read (length goes roughly as 1/speed), keeping the closer take.
+    const spoken = elevenText(text, r.style || "", r.model);
+    let speed = target ? clamp(estimateSpeech(text) / target, SPEED_MIN, SPEED_MAX) : 1;
+    for (let attempt = 0; attempt < (target ? 2 : 1); attempt++) {
+      const out = await synthesizeEleven({ text: spoken, voice: r.voice, model: r.model, speed });
+      const wav = trimSilence(out.wav);
+      const style = [(r.style || "").trim(), Math.abs(speed - 1) > 0.005 ? `speed ${speed.toFixed(2)}` : ""].filter(Boolean).join(", ");
+      const t: Try = { wav, dur: wavDuration(wav) || 0, style, model: out.model };
+      if (!best || !target || Math.abs(t.dur - target) < Math.abs(best.dur - target)) best = t;
+      if (!target) break;
+      const next = clamp(speed * (t.dur / target), SPEED_MIN, SPEED_MAX);
+      if (Math.abs(t.dur / target - 1) < 0.06 || Math.abs(next - speed) < 0.01) break;
+      speed = next;
+    }
   } else {
     let level = target ? paceLevel(estimateSpeech(text) / target) : 0;
     for (let attempt = 0; attempt < (target ? 2 : 1); attempt++) {
@@ -75,9 +93,10 @@ export async function makeTake(ctx: Ctx, project: string, r: TakeRequest): Promi
   const rel = `audio/vo/${slugify(r.clipId || "line")}-${id.slice(2)}.wav`;
   await mkdir(projectFile(ctx, project, "audio/vo"), { recursive: true });
   await writeFile(projectFile(ctx, project, rel), best!.wav);
+  const name = r.provider === "elevenlabs" ? await voiceName(r.voice) : undefined;
   return {
     id, asset: rel, duration: best!.dur, text,
-    voice: r.provider === "say" ? "macOS say" : r.voice, style: best!.style,
+    voice: r.provider === "say" ? "macOS say" : r.voice, ...(name ? { voiceName: name } : {}), style: best!.style,
     provider: r.provider, model: best!.model, createdAt: new Date().toISOString(), target,
   };
 }

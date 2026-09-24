@@ -1,7 +1,7 @@
 // App state: one external store (timeline + UI), snapshot undo/redo, debounced autosave.
 import { useSyncExternalStore } from "react";
 import type { FilmManifest, Timeline } from "../../shared/timeline.ts";
-import { api, type ProjectInfo, type Status } from "./api.ts";
+import { api, type ElevenVoice, type ProjectInfo, type Status } from "./api.ts";
 
 export type Sel =
   | { kind: "clip"; ids: string[] }
@@ -27,6 +27,7 @@ export interface State {
   panel: SidePanel;
   save: "saved" | "saving" | "dirty" | "error";
   status: Status | null;
+  elevenVoices: ElevenVoice[] | null; // loaded when the ElevenLabs engine is picked
   busy: Record<string, string>; // audio clip id / task -> label
   toast: { msg: string; kind: "info" | "error" } | null;
   exportOpen: boolean;
@@ -48,7 +49,7 @@ export type PromptTarget =
 let state: State = {
   project: null, timeline: null, manifest: null, filmVersion: null, filmError: null, sel: null,
   tool: "retime", snap: true, zoom: 60, playing: false, loop: false, panel: "scenes", save: "saved",
-  status: null, busy: {}, toast: null, exportOpen: false, assetsVersion: 0, diskTimeline: null,
+  status: null, elevenVoices: null, busy: {}, toast: null, exportOpen: false, assetsVersion: 0, diskTimeline: null,
   projects: [], newOpen: false, promptFor: null, saveTplOpen: false,
 };
 

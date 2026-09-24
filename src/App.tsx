@@ -168,6 +168,7 @@ export function App() {
                 : status.auth.mode === "adc" ? `Gemini: Application Default Credentials, project ${status.auth.project ?? "?"} (${status.auth.backend})`
                 : `No Gemini credentials. Add GEMINI_API_KEY to shot/.env or run: gcloud auth application-default login${status.auth.error ? `\n${status.auth.error}` : ""}`}
             />Gemini{status.auth.mode === "adc" ? " · ADC" : ""}
+            {status.elevenlabs && <><i className="ok" title="ElevenLabs: API key from shot/.env" />ElevenLabs</>}
             <i className={status.ffmpeg ? "ok" : "off"} title="ffmpeg for export" />ffmpeg
           </span>
         )}

@@ -1,17 +1,25 @@
-// npm run vo -- <project> [--draft] [--all] [--line <clip id>] [--voice Kore] [--style "calm"]
+// npm run vo -- <project> [--draft] [--engine gemini|elevenlabs] [--all] [--line <clip id>] [--voice <id>] [--style "calm"]
 // Generate voiceover takes and select them. Default: every line that has no audio yet.
-// Gemini 3.8 TTS by default (GEMINI_API_KEY in shot/.env, or ADC from `gcloud auth application-default login`);
-// --draft uses macOS `say` (free, instant).
-import { applyTake, voiceOf, type AudioClip, type Provider } from "../shared/timeline.ts";
+// Uses the project's engine (timeline.json voice.provider): Gemini 3.8 TTS (GEMINI_API_KEY in shot/.env, or ADC from
+// `gcloud auth application-default login`) or ElevenLabs (ELEVENLABS_API_KEY). --draft uses macOS `say` (free, instant).
+import { applyTake, engineOf, voiceOf, type AudioClip, type Provider } from "../shared/timeline.ts";
+import { elevenAvailable } from "../server/elevenlabs.ts";
 import { authStatus } from "../server/gemini.ts";
 import { makeTake } from "../server/media.ts";
 import { readTimeline, writeTimeline } from "../server/projects.ts";
 import { ctx, die, done, parseArgs, requireProject, timelineOf } from "./_lib.ts";
 
 const args = parseArgs();
-const project = requireProject(args._[0], "npm run vo -- <project> [--draft] [--all] [--line <id>]");
+const project = requireProject(args._[0], "npm run vo -- <project> [--draft] [--engine gemini|elevenlabs] [--all] [--line <id>]");
 const tl = await timelineOf(project);
-const provider: Provider = args.flags.draft ? "say" : "gemini";
+const engine = String(args.flags.engine || "");
+if (engine && engine !== "gemini" && engine !== "elevenlabs") die(`--engine is gemini or elevenlabs (or use --draft), not "${engine}".`);
+const provider: Provider = args.flags.draft ? "say" : (engine as Provider) || (tl.voice.provider === "elevenlabs" ? "elevenlabs" : "gemini");
+const { model } = engineOf(tl, provider);
+if (provider === "elevenlabs") {
+  if (!elevenAvailable()) die("No ElevenLabs key: add ELEVENLABS_API_KEY to shot/.env. Or use --draft for a free placeholder voice.");
+  console.log("ElevenLabs via API key");
+}
 if (provider === "gemini") {
   const auth = await authStatus();
   if (auth.mode === "none") die(`No Gemini credentials: add GEMINI_API_KEY to shot/.env or run \`gcloud auth application-default login\`. Or use --draft for a free placeholder voice.${auth.error ? `\nADC: ${auth.error}` : ""}`);
@@ -24,15 +32,15 @@ const pick = (c: AudioClip) =>
 const todo = lines.filter(pick);
 if (!todo.length) { console.log(args.flags.line ? `No VO line "${args.flags.line}".` : "Every line already has a take (use --all to regenerate)."); await done(); }
 
-console.log(`${todo.length} line(s) · ${provider === "say" ? "macOS say (draft)" : tl.voice.model}`);
+console.log(`${todo.length} line(s) · ${provider === "say" ? "macOS say (draft)" : model}`);
 const results = new Map<string, Awaited<ReturnType<typeof makeTake>>>();
 let failed = 0;
 for (let i = 0; i < todo.length; i += 3) {
   await Promise.all(todo.slice(i, i + 3).map(async (c) => {
-    const v = voiceOf(tl, c);
+    const v = voiceOf(tl, c, provider);
     try {
       const take = await makeTake(ctx, project, {
-        clipId: c.id, text: c.vo!.text, provider, model: tl.voice.model, target: c.vo!.target ?? null,
+        clipId: c.id, text: c.vo!.text, provider, model, target: c.vo!.target ?? null,
         voice: String(args.flags.voice || v.voice), style: String(args.flags.style ?? v.style ?? ""),
       });
       results.set(c.id, take);

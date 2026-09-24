@@ -16,6 +16,7 @@ async function req<T>(method: string, url: string, body?: BodyInit | object, hea
 export interface Status {
   gemini: boolean;
   auth: { mode: "key" | "adc" | "none"; project: string | null; backend: string | null; error: string | null };
+  elevenlabs: boolean;
   say: boolean; ffmpeg: boolean; projectsDir: string; studioRoot: string;
 }
 export interface ProjectInfo { name: string; title: string; dir: string; updatedAt: string | null; hasTimeline: boolean }
@@ -23,6 +24,7 @@ export interface TemplateInfo {
   id: string; name: string; description: string; tags: string[]; scenes: number | null; duration: number | null;
   from: string | null; createdAt: string | null; hasPreview: boolean;
 }
+export interface ElevenVoice { id: string; name: string; category: string; description: string | null; labels: Record<string, string>; preview: string | null }
 export interface Asset { asset: string; kind: string; duration: number | null; size: number }
 export interface Job {
   id: string; project: string; draft: boolean; status: "running" | "done" | "error" | "cancelled"; phase: string;
@@ -56,6 +58,7 @@ export const api = {
     req<{ asset: string; duration: number | null }>("POST", `${P(p)}/upload?kind=${kind}&filename=${encodeURIComponent(file.name)}`, file),
   tts: (p: string, body: { clipId: string; text: string; voice: string; style: string; model: string; provider: string; target: number | null }) =>
     req<{ take: Take }>("POST", `${P(p)}/tts`, body),
+  elevenVoices: (fresh = false) => req<ElevenVoice[]>("GET", `/api/elevenlabs/voices${fresh ? "?fresh=1" : ""}`),
   designVoice: (p: string, body: { name: string; description: string; model: string; gender?: string; language_code?: string }) =>
     req<{ voice: DesignedVoice }>("POST", `${P(p)}/voices`, body),
   music: (p: string, body: { prompt: string; model: string; name: string }) =>

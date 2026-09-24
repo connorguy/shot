@@ -79,13 +79,15 @@ Adding a scene: create `film/scenes/<id>.js`, add its `<script>` tag to `film.ht
     { "id": "music", "kind": "music", "gain": -6, "duck": { "enabled": true, "amount": -12, "attack": 0.25, "release": 0.6 }, "clips": [ ... ] },
     { "id": "sfx", "kind": "sfx", "clips": [ ... ] }
   ],
-  "voice": { "provider": "gemini", "model": "gemini-3.8-flash-tts", "voice": "Kore", "style": "" }
+  "voice": { "provider": "gemini", "model": "gemini-3.8-flash-tts", "voice": "Kore", "style": "",
+             "eleven": { "model": "eleven_v3", "voice": "JBFqnCBsd6RMkjVDRZzb", "name": "George" } }
 }
 ```
 
 - Retime a beat: change a clip's `duration`. Trim it: change `in`/`out` (keep `duration` in step to keep speed). Reorder: reorder `clips`. Keep `id`s stable, since audio anchors point at them.
 - Rewrite a VO line: edit `vo.text`, then generate a take (below). A take whose text differs from the line is shown as stale.
-- Make a line fit a slot: set `vo.target` (seconds). Generation paces the read toward it (Gemini TTS has no length parameter, so the pace goes into the delivery style, with one retry). Selecting a take then sets `rate` so it lands exactly, unless `voice.snapToTarget` is `false`. `rate` alone speeds a clip up or slows it down with pitch kept; `in`/`duration` are measured after that speed change.
+- Voice engine: `voice.provider` is `gemini`, `elevenlabs` or `say` (free draft). `model`/`voice` are Gemini's; `voice.eleven` holds the ElevenLabs model (`eleven_v3`, `eleven_multilingual_v2`, `eleven_flash_v2_5`) and voice id (20 letters and digits). A line's own `vo.voice` only counts when it belongs to the engine in use. On Eleven v3 the style becomes a leading audio tag (`[calm]`), and tags like `[whispers]` work inline in `vo.text`.
+- Make a line fit a slot: set `vo.target` (seconds). Generation paces the read toward it (Gemini through the delivery style with one retry, ElevenLabs through its 0.7–1.2× speed setting with one correction). Selecting a take then sets `rate` so it lands exactly, unless `voice.snapToTarget` is `false`. `rate` alone speeds a clip up or slows it down with pitch kept; `in`/`duration` are measured after that speed change.
 - `null` voice/style on a line means the project default in `voice`.
 - The studio reloads `timeline.json` when it changes on disk, as long as it has no unsaved edits of its own.
 
@@ -98,7 +100,7 @@ Each is `npm --prefix "{{STUDIO}}" run <command> -- . [options]` from this folde
 | `dev` | The studio UI at http://localhost:5178 (live preview, drag editing, VO, music, export). This project is in its project menu. No `-- .` needed. |
 | `inspect -- .` | Scenes, clips with start/end/speed, VO lines and takes, plus warnings (missing or broken scenes, overlapping or overrunning VO). `--json` for machine output. |
 | `frame -- . 12.5` | PNG of timeline time 12.5 s, saved in `.frames/`. `--scene chart --at 17.2` renders one scene at its own time. `--sheet` renders a contact sheet, one frame per clip. Prints the file path, so look at it. |
-| `vo -- .` | Generate takes for VO lines without audio (Gemini TTS; `--draft` uses free macOS `say`). `--all` regenerates every line; `--line vo_a1` one line. |
+| `vo -- .` | Generate takes for VO lines without audio, with the project's engine (Gemini or ElevenLabs; `--engine` overrides, `--draft` uses free macOS `say`). `--all` regenerates every line; `--line vo_a1` one line. |
 | `music -- . "prompt"` | Lyria track timed to the current cut's sections, placed on the Music track. `--dry` prints the prompt only. |
 | `render -- .` | Full MP4 with the audio mix into `exports/`. `--draft` for 540p. |
 | `bundle -- .` | One self-contained HTML of the current cut (scripts, styles, fonts, images inlined) for sharing or a design chat. |

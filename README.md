@@ -2,6 +2,12 @@
 
 **The video editor where the video is code.**
 
+Paste this into Claude Code or Codex to install it:
+
+```text
+Install Shot for me: clone https://github.com/connorguy/shot to ~/shot and follow its SETUP.md.
+```
+
 Every scene is a JavaScript file. Every frame is a function of time. Shot gives you a timeline to retime, reorder and split those scenes, adds Gemini voiceover and Lyria music, and exports an MP4. Nothing is baked until export, so you (or your agent) can change one line of one scene and the preview updates right away.
 
 No frames were harmed in the making of this editor. None were baked, either.
@@ -10,13 +16,7 @@ Site: [connorguy.github.io/shot](https://connorguy.github.io/shot) (source in [`
 
 ## Roll camera
 
-Paste this into Claude Code or Codex:
-
-```text
-Install Shot for me: clone https://github.com/connorguy/shot to ~/shot and follow its SETUP.md.
-```
-
-Your agent checks for Node, Chrome and ffmpeg, installs Shot, sets up voice if you want it, adds the film-design skill and opens the studio. The steps it follows are in [SETUP.md](SETUP.md).
+The line at the top does the setup for you. Your agent checks for Node, Chrome and ffmpeg, installs Shot, sets up voice if you want it, adds the film-design skill and opens the studio. The steps it follows are in [SETUP.md](SETUP.md).
 
 Then pick **File → New project**, a starting point and an aspect (landscape, portrait or square). That's most of the manual.
 
@@ -63,7 +63,7 @@ More on the pipeline in [PIPELINE.md](PIPELINE.md). The scene contract is in [fi
 - **Undo is deep.** Use ⌘Z. The last 40 saves are kept in `.history/`.
 - **Films are code.** A design runs in your browser, next to the studio, so only open designs you trust.
 
-Keys: `T` trim · `S` split · `H` hold · `P` prompt · `[` `]` hide side panels · `⌥` no snapping · `⇧` swap retime/trim.
+Keys: `T` trim · `S` split · `H` hold · `P` prompt · `[` `]` hide side panels · `F` full screen · `⌥` no snapping · `⇧` swap retime/trim.
 
 ## CLI
 

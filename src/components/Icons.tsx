@@ -23,6 +23,8 @@ const paths: Record<string, string> = {
   folder: "M2 4.5A1.5 1.5 0 0 1 3.5 3H6l1.5 1.5h5A1.5 1.5 0 0 1 14 6v5.5A1.5 1.5 0 0 1 12.5 13h-9A1.5 1.5 0 0 1 2 11.5z",
   copy: "M5.5 5.5h7v7h-7zM3.5 10.5v-7h7",
   chevron: "M4.5 6.5L8 10l3.5-3.5",
+  expand: "M2.5 6V2.5H6M10 2.5h3.5V6M13.5 10v3.5H10M6 13.5H2.5V10",
+  shrink: "M6 2.5V6H2.5M10 2.5V6h3.5M13.5 10H10v3.5M2.5 10H6v3.5",
   panelLeft: "M2.5 3h11v10h-11zM6.5 3v10",
   panelRight: "M2.5 3h11v10h-11zM9.5 3v10",
 };

@@ -195,6 +195,9 @@ textarea.prompt-preview { margin-top: 8px; font-size: 11.5px; color: var(--muted
 
 /* preview */
 .preview { height: 100%; display: flex; flex-direction: column; min-height: 0; }
+.preview.full { position: fixed; inset: 0; z-index: 40; height: auto; background: #0d0d0c; }
+.preview.full .preview-wrap { padding: 24px 24px 8px; }
+.preview.full .preview-box { box-shadow: none; border-radius: 0; }
 .preview-wrap { flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; padding: 18px 18px 8px; }
 .preview-box { position: relative; overflow: hidden; border-radius: 4px; box-shadow: 0 0 0 1px var(--line2), 0 10px 30px rgba(19, 19, 18, 0.12); background: #fff; }
 .preview-box iframe { position: absolute; left: 0; top: 0; border: 0; transform-origin: 0 0; pointer-events: none; background: #fff; }

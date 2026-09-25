@@ -27,6 +27,7 @@ export interface State {
   panel: SidePanel;
   showSide: boolean; // left panel (scenes, voiceover, music)
   showInspect: boolean; // right panel (inspector)
+  fullscreen: boolean; // the preview fills the window (and the screen, where the browser allows)
   save: "saved" | "saving" | "dirty" | "error";
   status: Status | null;
   elevenVoices: ElevenVoice[] | null; // loaded when the ElevenLabs engine is picked
@@ -60,7 +61,7 @@ function savedLayout(): Pick<State, "showSide" | "showInspect"> {
 
 let state: State = {
   project: null, timeline: null, manifest: null, filmVersion: null, filmError: null, sel: null,
-  tool: "retime", snap: true, zoom: 60, playing: false, loop: false, panel: "scenes", ...savedLayout(), save: "saved",
+  tool: "retime", snap: true, zoom: 60, playing: false, loop: false, panel: "scenes", ...savedLayout(), fullscreen: false, save: "saved",
   status: null, elevenVoices: null, busy: {}, toast: null, exportOpen: false, assetsVersion: 0, diskTimeline: null,
   projects: [], newOpen: false, promptFor: null, saveTplOpen: false,
 };

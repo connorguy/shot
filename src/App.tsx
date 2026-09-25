@@ -12,7 +12,7 @@ import { PromptDialog, promptForSelection } from "./components/PromptDialog.tsx"
 import { SaveTemplateDialog } from "./components/SaveTemplateDialog.tsx";
 import { playhead } from "./lib/playhead.ts";
 import { Inspector } from "./components/Inspector.tsx";
-import { Preview } from "./components/Preview.tsx";
+import { Preview, toggleFullscreen } from "./components/Preview.tsx";
 import { SceneBin } from "./components/SceneBin.tsx";
 import { ScriptPanel } from "./components/ScriptPanel.tsx";
 import { Timeline } from "./components/Timeline.tsx";
@@ -124,9 +124,10 @@ export function App() {
       if (k === "l") return run(() => setState({ loop: !getState().loop }));
       if (k === "p") return run(() => promptForSelection(playhead.get()));
       if (k === "z") return run(() => window.dispatchEvent(new Event("studio:fit")));
+      if (k === "f") return run(toggleFullscreen);
       if (k === "[") return run(() => togglePanel("showSide"));
       if (k === "]") return run(() => togglePanel("showInspect"));
-      if (k === "escape") return run(() => setState({ sel: null }));
+      if (k === "escape") return run(() => (getState().fullscreen ? toggleFullscreen() : setState({ sel: null })));
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);

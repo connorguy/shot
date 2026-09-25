@@ -7,6 +7,26 @@ import { getState, setState, useStore } from "../lib/store.ts";
 import * as transport from "../lib/transport.ts";
 import { Icon } from "./Icons.tsx";
 
+const previewEl: { current: HTMLDivElement | null } = { current: null };
+let native = false; // the browser's own full screen is on (some embedded browsers refuse it)
+
+/** Full screen: the preview and its transport fill the window, and the screen too where the browser allows. */
+export function toggleFullscreen() {
+  const on = !getState().fullscreen;
+  setState({ fullscreen: on });
+  if (on) previewEl.current?.requestFullscreen?.().then(() => { native = true; }).catch(() => {});
+  else if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+}
+
+// Esc in the browser's full screen never reaches the page as a key: leave the full window view with it
+if (typeof document !== "undefined") {
+  document.addEventListener("fullscreenchange", () => {
+    if (document.fullscreenElement || !native) return;
+    native = false;
+    if (getState().fullscreen) setState({ fullscreen: false });
+  });
+}
+
 /** The film itself, in an iframe at native size (?render) scaled to fit: pixel-identical to export. */
 export function Preview() {
   const project = useStore((s) => s.project);
@@ -17,6 +37,7 @@ export function Preview() {
   const frame = useRef<HTMLIFrameElement>(null);
   const [scale, setScale] = useState(0.4);
   const [ready, setReady] = useState(false);
+  const full = useStore((s) => s.fullscreen);
   const W = tl?.width || 1920, H = tl?.height || 1080;
 
   useEffect(() => {
@@ -75,7 +96,7 @@ export function Preview() {
 
   if (!project || !film) return <div className="preview-wrap" />;
   return (
-    <div className="preview">
+    <div className={`preview${full ? " full" : ""}`} ref={(el) => { previewEl.current = el; }}>
       <div className="preview-wrap" ref={wrap}>
         <div className="preview-box" style={{ width: W * scale, height: H * scale }}>
           <iframe
@@ -93,6 +114,7 @@ export function Preview() {
 }
 
 function Transport() {
+  const full = useStore((s) => s.fullscreen);
   const t = usePlayhead();
   const tl = useStore((s) => s.timeline);
   const playing = useStore((s) => s.playing);
@@ -117,6 +139,7 @@ function Transport() {
       <div className="keys-row">
         <button className={`key ${loop ? "on" : ""}`} title="Loop (L)" onClick={() => setState({ loop: !loop })}><Icon name="loop" /></button>
         <button className="key" title="Copy a prompt for an agent to change what's on screen now (P)" onClick={() => setState({ promptFor: { kind: "frame", t: playhead.get() } })}><Icon name="pencil" /></button>
+        <button className="key" title={full ? "Exit full screen (F or Esc)" : "Full screen (F)"} aria-pressed={full} onClick={toggleFullscreen}><Icon name={full ? "shrink" : "expand"} /></button>
       </div>
     </div>
   );

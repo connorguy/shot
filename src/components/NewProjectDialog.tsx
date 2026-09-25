@@ -1,20 +1,26 @@
 import { useEffect, useRef, useState } from "react";
+import { ASPECTS, aspectOf, type Aspect } from "../../shared/timeline.ts";
 import { api, type TemplateInfo } from "../lib/api.ts";
 import { setState, toast, useStore } from "../lib/store.ts";
+
+/** "~/Movies/Launch_film-v2.mp4" → "Launch film v2" */
+const videoTitle = (path: string) => (path.split("/").pop() || "").replace(/\.[^.]+$/, "").replace(/[_-]+/g, " ").trim();
 
 const slug = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 60) || "film";
 
 /** New project anywhere on disk: scaffolds AGENTS.md, CLAUDE.md, brief.md, .gitignore and a starter film
- *  (or a design from a Claude session), registers it, and opens it. */
+ *  (or a design from a Claude session, or placeholders cloned from a video), registers it, and opens it. */
 export function NewProjectDialog({ onCreated }: { onCreated: (id: string) => void }) {
   const open = useStore((s) => s.newOpen);
   const dlg = useRef<HTMLDialogElement>(null);
   const [title, setTitle] = useState("");
   const [parent, setParent] = useState("");
-  const [start, setStart] = useState<"template" | "design">("template");
+  const [start, setStart] = useState<"template" | "design" | "video">("template");
   const [templates, setTemplates] = useState<TemplateInfo[]>([]);
   const [tpl, setTpl] = useState("starter");
+  const [aspect, setAspect] = useState<Aspect>("landscape");
   const [design, setDesign] = useState("");
+  const [video, setVideo] = useState("");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
@@ -24,18 +30,26 @@ export function NewProjectDialog({ onCreated }: { onCreated: (id: string) => voi
     if (open && !d.open) {
       setErr(null);
       api.newDefaults().then((r) => setParent((p) => p || r.parent)).catch(() => {});
-      api.templates().then(setTemplates).catch(() => setTemplates([]));
+      api.templates().then((ts) => {
+        setTemplates(ts);
+        const t = ts.find((x) => x.id === tpl);
+        if (t) setAspect(aspectOf(t.width, t.height));
+      }).catch(() => setTemplates([]));
       d.showModal();
     }
     if (!open && d.open) d.close();
   }, [open]);
 
-  const choose = async (kind: "folder" | "design") => {
+  const choose = async (kind: "folder" | "design" | "video") => {
     const r = await api.pick(kind, kind === "folder" ? parent : undefined).catch(() => ({ path: null }));
     if (!r.path) return;
     if (kind === "folder") setParent(r.path);
-    else { setDesign(r.path); setStart("design"); }
+    else if (kind === "design") { setDesign(r.path); setStart("design"); }
+    else { setVideo(r.path); setStart("video"); if (!title.trim()) setTitle(videoTitle(r.path)); }
   };
+
+  const tplInfo = templates.find((x) => x.id === tpl);
+  const native = tplInfo ? aspectOf(tplInfo.width, tplInfo.height) : aspect;
 
   const create = async () => {
     setBusy(true); setErr(null);
@@ -43,11 +57,14 @@ export function NewProjectDialog({ onCreated }: { onCreated: (id: string) => voi
       const r = await api.createProject({
         name: slug(title), title: title.trim(), parent: parent.trim(),
         from: start === "design" ? design.trim() : null, template: start === "template" ? tpl : null,
+        video: start === "video" ? video.trim() : null, aspect: start === "template" && aspect !== native ? aspect : null, // unchanged: keep the template's exact size
       });
       setState({ newOpen: false });
-      setTitle(""); setDesign(""); setStart("template");
+      setTitle(""); setDesign(""); setVideo(""); setStart("template");
       onCreated(r.id);
-      toast(`Created ${r.dir}. Its AGENTS.md explains the project to any agent.`);
+      toast(start === "video"
+        ? `Created ${r.dir}. Each shot is a placeholder: ask an agent in that folder to rebuild them (its AGENTS.md explains how).`
+        : `Created ${r.dir}. Its AGENTS.md explains the project to any agent.`);
     } catch (e: any) {
       setErr(e.message);
     } finally { setBusy(false); }
@@ -70,7 +87,7 @@ export function NewProjectDialog({ onCreated }: { onCreated: (id: string) => voi
       <label>Start from</label>
       <div className="tpl-grid">
         {templates.map((t) => (
-          <button key={t.id} className={`tpl ${start === "template" && tpl === t.id ? "on" : ""}`} onClick={() => { setStart("template"); setTpl(t.id); }} title={t.description}>
+          <button key={t.id} className={`tpl ${start === "template" && tpl === t.id ? "on" : ""}`} onClick={() => { setStart("template"); setTpl(t.id); setAspect(aspectOf(t.width, t.height)); }} title={t.description}>
             {t.hasPreview ? <img src={api.templatePreview(t.id)} alt="" /> : <span className="noprev" />}
             <b>{t.name}</b>
             <span>{[t.scenes ? `${t.scenes} scenes` : null, t.duration ? `${t.duration.toFixed(0)}s` : null].filter(Boolean).join(" · ") || "template"}</span>
@@ -81,8 +98,38 @@ export function NewProjectDialog({ onCreated }: { onCreated: (id: string) => voi
           <b>A design from Claude</b>
           <span>zip, film.html or folder</span>
         </button>
+        <button className={`tpl design ${start === "video" ? "on" : ""}`} onClick={() => { setStart("video"); if (!video) choose("video"); }} title="Clone a video on disk: one placeholder scene per shot, at the original timing, for an agent to rebuild as code">
+          <span className="noprev">▶</span>
+          <b>Clone a video</b>
+          <span>mp4, mov, webm…</span>
+        </button>
       </div>
-      {start === "template" && <p className="panel-note">{templates.find((t) => t.id === tpl)?.description} Templates carry the scenes, styles and cut, never audio; draft voiceover lines come back as empty slots.</p>}
+      {start === "template" && (
+        <>
+          <p className="panel-note">{tplInfo?.description} Templates carry the scenes, styles and cut, never audio; draft voiceover lines come back as empty slots.</p>
+          <label>Aspect</label>
+          <div className="seg big aspect" role="group" aria-label="Aspect">
+            {(Object.keys(ASPECTS) as Aspect[]).map((a) => (
+              <button key={a} className={aspect === a ? "on" : ""} aria-pressed={aspect === a} onClick={() => setAspect(a)}>
+                <i style={{ aspectRatio: `${ASPECTS[a].width} / ${ASPECTS[a].height}` }} />
+                {ASPECTS[a].label}<span>{ASPECTS[a].ratio} · {ASPECTS[a].width}×{ASPECTS[a].height}</span>
+              </button>
+            ))}
+          </div>
+          {aspect !== native && <p className="panel-note">This template was laid out for {ASPECTS[native].label.toLowerCase()}. Scenes that place things by <code>W</code> and <code>H</code> adapt; ask an agent to re-lay out the rest.</p>}
+        </>
+      )}
+      {start === "video" && (
+        <>
+          <label>Video
+            <span className="path-row">
+              <input value={video} onChange={(e) => setVideo(e.target.value)} placeholder="~/Movies/launch-film.mp4" spellCheck={false} />
+              <button onClick={() => choose("video")}>Choose…</button>
+            </span>
+          </label>
+          <p className="panel-note">Shot finds the cuts, saves reference frames and the soundtrack, and makes one placeholder scene per shot at the original timing. Then an agent rebuilds each shot as code and checks it against the original with <code>compare</code>.</p>
+        </>
+      )}
       {start === "design" && (
         <label>Design
           <span className="path-row">
@@ -97,13 +144,16 @@ export function NewProjectDialog({ onCreated }: { onCreated: (id: string) => voi
   CLAUDE.md      → AGENTS.md
   brief.md       what the film says; fill in first
   film.html      loads the scenes in order
-  film/          film-kit.js · lib.js · styles.css · scenes/*.js · edit.js
+  film/          film-kit.js · lib.js · styles.css · scenes/*.js · edit.js${start === "video" ? `
+  reference/     the video, its shots, contact sheets and frames` : ""}
   audio/  exports/  .gitignore`}</pre>
       )}
       {err && <p className="warn">{err}</p>}
       <div className="btn-row end">
         <button onClick={() => setState({ newOpen: false })}>Cancel</button>
-        <button className="primary" disabled={busy || !target || (start === "design" && !design.trim())} onClick={create}>{busy ? "Creating…" : "Create project"}</button>
+        <button className="primary" disabled={busy || !target || (start === "design" && !design.trim()) || (start === "video" && !video.trim())} onClick={create}>
+          {busy ? (start === "video" ? "Analyzing video…" : "Creating…") : "Create project"}
+        </button>
       </div>
     </dialog>
   );

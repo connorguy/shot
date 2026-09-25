@@ -5,7 +5,7 @@ import { existsSync } from "node:fs";
 import { cp, mkdir, mkdtemp, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import { homedir, tmpdir } from "node:os";
 import { join } from "node:path";
-import { layersAt, normalizeTimeline, templateTimeline, totalDuration, type Timeline } from "../shared/timeline.ts";
+import { ASPECTS, layersAt, normalizeTimeline, templateTimeline, totalDuration, type Aspect, type Timeline } from "../shared/timeline.ts";
 import { openFilm, renderLayers } from "./chrome.ts";
 import { projectDir, readTimeline, slugify, type Ctx } from "./projects.ts";
 
@@ -19,6 +19,7 @@ export interface TemplateInfo {
   from: string | null;
   createdAt: string | null;
   hasPreview: boolean;
+  width: number; height: number; // the film's stage
 }
 
 /** Built-in templates ship in the app; when the app folder is a package install (Homebrew), templates
@@ -49,10 +50,11 @@ export async function listTemplates(ctx: Ctx): Promise<TemplateInfo[]> {
     if (!e.isDirectory() || !existsSync(meta)) continue;
     try {
       const t = JSON.parse(await readFile(meta, "utf8"));
+      const size = await stageSize(join(root, e.name));
       out.push({
         id: e.name, name: t.name || e.name, description: t.description || "", tags: t.tags || [],
         scenes: t.scenes ?? null, duration: t.duration ?? null, from: t.from ?? null, createdAt: t.createdAt ?? null,
-        hasPreview: existsSync(join(root, e.name, "preview.jpg")),
+        hasPreview: existsSync(join(root, e.name, "preview.jpg")), ...size,
       });
     } catch { /* skip unreadable template.json */ }
   }
@@ -61,8 +63,37 @@ export async function listTemplates(ctx: Ctx): Promise<TemplateInfo[]> {
   return out.sort((a, b) => (a.id === "starter" ? -1 : b.id === "starter" ? 1 : (b.createdAt || "").localeCompare(a.createdAt || "")));
 }
 
+/** A film folder's stage size: its timeline.json, else the FilmKit.create(...) call in film/lib.js. */
+async function stageSize(dir: string): Promise<{ width: number; height: number }> {
+  try {
+    const tl = JSON.parse(await readFile(join(dir, "timeline.json"), "utf8"));
+    if (tl.width && tl.height) return { width: tl.width, height: tl.height };
+  } catch { /* no cut saved with the template */ }
+  const lib = await readFile(join(dir, "film", "lib.js"), "utf8").catch(() => "");
+  const call = /FilmKit\.create\(\{[^}]*\}\)/.exec(lib)?.[0] || "";
+  return { width: Number(/width:\s*(\d+)/.exec(call)?.[1]) || 1920, height: Number(/height:\s*(\d+)/.exec(call)?.[1]) || 1080 };
+}
+
+/** Change a new project's stage size: the FilmKit.create(...) call in film/lib.js, timeline.json and the brief. */
+export async function setStageSize(dir: string, aspect: Aspect) {
+  const { width, height, ratio } = ASPECTS[aspect];
+  const lib = join(dir, "film", "lib.js");
+  if (existsSync(lib)) {
+    const s = await readFile(lib, "utf8");
+    await writeFile(lib, s.replace(/FilmKit\.create\(\{[^}]*\}\)/, (call) => call.replace(/width:\s*\d+/, `width: ${width}`).replace(/height:\s*\d+/, `height: ${height}`)));
+  }
+  const tlPath = join(dir, "timeline.json");
+  if (existsSync(tlPath)) {
+    const tl = JSON.parse(await readFile(tlPath, "utf8"));
+    tl.width = width; tl.height = height;
+    await writeFile(tlPath, JSON.stringify(tl, null, 2) + "\n");
+  }
+  const brief = join(dir, "brief.md");
+  if (existsSync(brief)) await writeFile(brief, (await readFile(brief, "utf8")).replace(/^- Aspect: .*$/m, `- Aspect: ${width}×${height} (${ratio})`));
+}
+
 /** Files that make up a film, skipping audio, renders, history and docs that belong to one project. */
-const FILM_SKIP = new Set(["audio", "exports", ".history", ".frames", "timeline.json", "AGENTS.md", "CLAUDE.md", "brief.md", ".gitignore", "template.json", "preview.jpg"]);
+const FILM_SKIP = new Set(["audio", "exports", ".history", ".frames", "reference", "timeline.json", "AGENTS.md", "CLAUDE.md", "brief.md", ".gitignore", "template.json", "preview.jpg"]);
 
 async function copyFilm(from: string, to: string) {
   await mkdir(to, { recursive: true });

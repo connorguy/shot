@@ -1,4 +1,4 @@
-import type { DesignedVoice, Take, Timeline } from "../../shared/timeline.ts";
+import type { Aspect, DesignedVoice, Take, Timeline } from "../../shared/timeline.ts";
 
 async function req<T>(method: string, url: string, body?: BodyInit | object, headers: Record<string, string> = {}): Promise<T> {
   const isRaw = body instanceof Blob || body instanceof ArrayBuffer || typeof body === "string";
@@ -22,7 +22,7 @@ export interface Status {
 export interface ProjectInfo { name: string; title: string; dir: string; updatedAt: string | null; hasTimeline: boolean }
 export interface TemplateInfo {
   id: string; name: string; description: string; tags: string[]; scenes: number | null; duration: number | null;
-  from: string | null; createdAt: string | null; hasPreview: boolean;
+  from: string | null; createdAt: string | null; hasPreview: boolean; width: number; height: number;
 }
 export interface ElevenVoice { id: string; name: string; category: string; description: string | null; labels: Record<string, string>; preview: string | null }
 export interface Asset { asset: string; kind: string; duration: number | null; size: number }
@@ -41,15 +41,16 @@ export const api = {
   status: () => req<Status>("GET", "/api/status"),
   projects: () => req<ProjectInfo[]>("GET", "/api/projects"),
   newDefaults: () => req<{ parent: string; studioProjects: string; home: string }>("GET", "/api/new-defaults"),
-  createProject: (body: { name: string; title?: string; parent?: string; from?: string | null; template?: string | null }) => req<{ id: string; dir: string }>("POST", "/api/projects", body),
+  createProject: (body: { name: string; title?: string; parent?: string; from?: string | null; template?: string | null; video?: string | null; aspect?: Aspect | null }) => req<{ id: string; dir: string }>("POST", "/api/projects", body),
   templates: () => req<TemplateInfo[]>("GET", "/api/templates"),
   templatePreview: (id: string, v = 0) => `/api/templates/${encodeURIComponent(id)}/preview?v=${v}`,
   saveTemplate: (p: string, body: { name: string; description: string; at: number; includeCut: boolean; overwrite: boolean }) =>
     req<{ id: string; dir: string }>("POST", `${P(p)}/template`, body),
   openFolder: (path: string) => req<{ id: string; dir: string }>("POST", "/api/projects/open", { path }),
   forgetProject: (p: string) => req("POST", `${P(p)}/forget`),
+  duplicateProject: (p: string, title: string) => req<{ id: string; dir: string }>("POST", `${P(p)}/duplicate`, { title }),
   revealProject: (p: string) => req("POST", `${P(p)}/reveal`),
-  pick: (kind: "folder" | "design" | "project", start?: string) => req<{ path: string | null }>("POST", "/api/pick", { kind, start }),
+  pick: (kind: "folder" | "design" | "video" | "project", start?: string) => req<{ path: string | null }>("POST", "/api/pick", { kind, start }),
   timeline: (p: string) => req<{ timeline: Timeline | null; filmVersion: string | null; timelineVersion: string | null }>("GET", `${P(p)}/timeline`),
   saveTimeline: (p: string, tl: Timeline) => req<{ ok: true; updatedAt: string; timelineVersion: string | null }>("PUT", `${P(p)}/timeline`, tl),
   versions: (p: string) => req<{ film: string | null; timeline: string | null }>("GET", `${P(p)}/versions`),

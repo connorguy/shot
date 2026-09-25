@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // shot: command-line entry point (npm link, or what the Homebrew formula installs).
 //   shot                 start the studio and open it in your browser  (--no-open to skip, --port 5178)
-//   shot <command> ...   new · open · inspect · frame · vo · music · render · bundle · template · pack-skill
+//   shot <command> ...   new · open · duplicate · inspect · frame · compare · vo · music · render · bundle · template · pack-skill
 // Paths you pass are resolved from where you run shot, so `shot inspect .` works inside a project.
 import { spawn } from "node:child_process";
 import { realpathSync } from "node:fs";
@@ -11,7 +11,7 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = join(dirname(realpathSync(fileURLToPath(import.meta.url))), "..");
 const COMMANDS = {
-  new: "new-project", open: "open", inspect: "inspect", frame: "frame", vo: "vo", music: "music",
+  new: "new-project", open: "open", duplicate: "duplicate", inspect: "inspect", frame: "frame", compare: "compare", vo: "vo", music: "music",
   render: "render", bundle: "bundle", template: "template", "pack-skill": "pack-skill",
 };
 const [major, minor] = process.versions.node.split(".").map(Number);
@@ -59,10 +59,12 @@ if (!cmd || cmd === "studio" || cmd === "dev" || cmd.startsWith("--")) {
   console.log(`shot: the video editor where the video is code
 
   shot                      open the studio (http://localhost:5178)
-  shot new <name> [--dir .] [--template starter|hardware-type|…] [--from design.zip]
+  shot new <name> [--dir .] [--template starter|hardware-type|…] [--aspect portrait|square] [--from design.zip] [--video clip.mp4]
   shot open <folder>        add a project folder to the studio
+  shot duplicate <folder> ["Title"]  copy a project next to it (--dir elsewhere)
   shot inspect <folder>     scenes, cut, audio, warnings
   shot frame <folder> 12.5  render a still (--sheet for a contact sheet)
+  shot compare <folder> 12.5  cloned from a video: film next to the reference (--shot <id>, --sheet)
   shot vo <folder>          generate voiceover takes (--draft: free macOS voice)
   shot music <folder> "…"   generate a Lyria track timed to the cut
   shot render <folder>      export an mp4 (--draft for 540p)

@@ -59,4 +59,4 @@ If the environment can only produce one file (for example a chat artifact), inli
 
 ## Handoff
 
-Zip the folder. In Shot, click **New…** → **A design from Claude** and pick the zip (or a single `film.html`). The studio writes its own `AGENTS.md` into the project, so you don't need to keep the template's copy current.
+Zip the folder. In Shot, pick **File → New project…** → **A design from Claude** and pick the zip (or a single `film.html`). The studio writes its own `AGENTS.md` into the project, so you don't need to keep the template's copy current.

@@ -123,6 +123,15 @@ export const PREBUILT_VOICES: [string, string][] = [
   ["Zubenelgenubi", "Casual"], ["Vindemiatrix", "Gentle"], ["Sadachbia", "Lively"], ["Sadaltager", "Knowledgeable"], ["Sulafat", "Warm"],
 ];
 
+/** Stage sizes a new project can start at. */
+export const ASPECTS = {
+  landscape: { width: 1920, height: 1080, label: "Landscape", ratio: "16:9" },
+  portrait: { width: 1080, height: 1920, label: "Portrait", ratio: "9:16" },
+  square: { width: 1080, height: 1080, label: "Square", ratio: "1:1" },
+} as const;
+export type Aspect = keyof typeof ASPECTS;
+export const aspectOf = (width: number, height: number): Aspect => (width > height ? "landscape" : width < height ? "portrait" : "square");
+
 export const uid = (p = "") => p + Math.random().toString(36).slice(2, 9);
 export const clamp = (x: number, a: number, b: number) => Math.min(b, Math.max(a, x));
 export const dbToGain = (db: number) => Math.pow(10, db / 20);

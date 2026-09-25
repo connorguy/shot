@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { emptyTimeline, seedVoFromManifest, timelineFromManifest } from "../shared/timeline.ts";
 import { addHold, addVoLine, deleteSelection, duplicateSelection, splitAt } from "./lib/actions.ts";
 import { api } from "./lib/api.ts";
@@ -99,7 +99,7 @@ export function App() {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const el = e.target as HTMLElement;
-      if (el.closest("input, textarea, select, [contenteditable=true]") || document.querySelector("dialog[open]")) return;
+      if (el.closest("input, textarea, select, [contenteditable=true], [role=menu]") || document.querySelector("dialog[open]")) return;
       const mod = e.metaKey || e.ctrlKey;
       const fps = getState().timeline?.fps || 30;
       const k = e.key.toLowerCase();
@@ -143,6 +143,31 @@ export function App() {
     } catch (e: any) { toast(e.message, "error"); }
   };
 
+  const dir = projects.find((p) => p.name === project)?.dir;
+  const copyPath = async () => {
+    if (!dir) return;
+    try {
+      await navigator.clipboard.writeText(dir);
+      toast(`Copied ${dir}`);
+    } catch {
+      prompt("Project folder:", dir);
+    }
+  };
+
+  const duplicate = async () => {
+    if (!project) return;
+    const cur = projects.find((p) => p.name === project);
+    const title = prompt("Name for the copy (it goes next to this project):", `${cur?.title || project} copy`);
+    if (!title?.trim()) return;
+    try {
+      await saveNow();
+      const { id, dir } = await api.duplicateProject(project, title.trim());
+      await refreshProjects();
+      await openProject(id);
+      toast(`Duplicated to ${dir}`);
+    } catch (e: any) { toast(e.message, "error"); }
+  };
+
   return (
     <div className="app">
       <header className="topbar">
@@ -156,9 +181,14 @@ export function App() {
           {projects.map((p) => <option key={p.name} value={p.name} title={p.dir}>{p.title}</option>)}
           <option value="__open">Open project folder…</option>
         </select>
-        {project && <ProjectPathButtons project={project} dir={projects.find((p) => p.name === project)?.dir} />}
-        <button onClick={openFolder} title="Open a project folder from anywhere on disk (the folder with film.html)">Open</button>
-        <button onClick={() => setState({ newOpen: true })} title="New project folder anywhere on disk, with AGENTS.md and a starter film">New</button>
+        <Menu label="File" items={[
+          { label: "New project…", hint: "From a template, a design or a video", onClick: () => setState({ newOpen: true }) },
+          { label: "Open project folder…", hint: "Any folder with a film.html", onClick: openFolder },
+          { label: "Duplicate this project…", hint: "Film, timeline and audio, in a new folder", onClick: duplicate, disabled: !project },
+          "sep",
+          { label: "Show in Finder", hint: dir && tail(dir), title: dir, onClick: () => project && api.revealProject(project), disabled: !project },
+          { label: "Copy folder path", onClick: copyPath, disabled: !dir },
+        ]} />
         <span className="sep" />
         <button className="icon" disabled={!canUndo()} onClick={undo} title="Undo (⌘Z)">↶</button>
         <button className="icon" disabled={!canRedo()} onClick={redo} title="Redo (⇧⌘Z)">↷</button>
@@ -228,24 +258,50 @@ export function App() {
   );
 }
 
-function ProjectPathButtons({ project, dir }: { project: string; dir?: string }) {
-  const copy = async () => {
-    if (!dir) return;
-    try {
-      await navigator.clipboard.writeText(dir);
-      toast(`Copied ${dir}`);
-    } catch {
-      prompt("Project folder:", dir);
-    }
+interface MenuItem { label: string; hint?: string; title?: string; onClick: () => void; disabled?: boolean }
+
+/** The end of a long path, so the folder name stays readable. */
+const tail = (p: string, n = 40) => (p.length > n ? `…${p.slice(-(n - 1))}` : p);
+
+/** A button that opens a short list of actions. Arrow keys move, Escape or a click outside closes. */
+function Menu({ label, items }: { label: string; items: (MenuItem | "sep")[] }) {
+  const [open, setOpen] = useState(false);
+  const box = useRef<HTMLDivElement>(null);
+  const entries = () => [...(box.current?.querySelectorAll<HTMLButtonElement>("[role=menuitem]:not(:disabled)") || [])];
+
+  useEffect(() => {
+    if (!open) return;
+    entries()[0]?.focus();
+    const away = (e: PointerEvent) => { if (!box.current?.contains(e.target as Node)) setOpen(false); };
+    const esc = (e: KeyboardEvent) => { if (e.key === "Escape") { e.stopPropagation(); setOpen(false); box.current?.querySelector<HTMLButtonElement>("button")?.focus(); } };
+    window.addEventListener("pointerdown", away);
+    window.addEventListener("keydown", esc, true);
+    return () => { window.removeEventListener("pointerdown", away); window.removeEventListener("keydown", esc, true); };
+  }, [open]);
+
+  const move = (e: React.KeyboardEvent) => {
+    const list = entries(), i = list.indexOf(document.activeElement as HTMLButtonElement);
+    const to = e.key === "ArrowDown" ? i + 1 : e.key === "ArrowUp" ? i - 1 : e.key === "Home" ? 0 : e.key === "End" ? -1 : null;
+    if (to == null || !list.length) return;
+    e.preventDefault();
+    list[(to + list.length) % list.length].focus();
   };
+
   return (
-    <span className="path-btns">
-      <button className="icon" onClick={() => api.revealProject(project)} title={`Show in Finder\n${dir || ""}`} aria-label="Show project folder in Finder">
-        <Icon name="folder" />
+    <div className="menu" ref={box}>
+      <button aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen(!open)}
+        onKeyDown={(e) => { if (e.key === "ArrowDown" && !open) { e.preventDefault(); setOpen(true); } }}>
+        {label}<Icon name="chevron" size={12} />
       </button>
-      <button className="icon" onClick={copy} disabled={!dir} title={`Copy path\n${dir || ""}`} aria-label="Copy project folder path">
-        <Icon name="copy" />
-      </button>
-    </span>
+      {open && (
+        <div className="menu-list" role="menu" aria-label={label} onKeyDown={move}>
+          {items.map((it, i) => it === "sep" ? <div key={i} role="separator" className="menu-sep" /> : (
+            <button key={it.label} role="menuitem" disabled={it.disabled} title={it.title} onClick={() => { setOpen(false); it.onClick(); }}>
+              <span>{it.label}</span>{it.hint && <small>{it.hint}</small>}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }

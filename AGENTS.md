@@ -10,7 +10,7 @@ Two kinds of work happen here. Find out which one you're doing first.
 - `npm run dev`: studio at http://localhost:5178 (Vite and the API in one process).
 - `npm run typecheck`: `tsc --noEmit` over `src/`, `server/`, `shared/` and `scripts/`. Run it before handing off.
 - `npm run build`: typecheck plus a production bundle of the UI.
-- CLI for films: `new`, `inspect`, `frame`, `vo`, `music`, `render`, `bundle`, `pack-skill` (see README).
+- CLI for films: `new`, `open`, `duplicate`, `inspect`, `frame`, `compare`, `vo`, `music`, `render`, `bundle`, `pack-skill` (see README).
 
 ## Code map
 
@@ -25,6 +25,8 @@ Two kinds of work happen here. Find out which one you're doing first.
 | Gemini: API key or ADC (Developer API, then Agent Platform fallback); TTS, voice design, Lyria | `server/gemini.ts`, `server/media.ts` |
 | ElevenLabs (optional, `ELEVENLABS_API_KEY`): TTS with speed-based pacing, voice list | `server/elevenlabs.ts`, `server/media.ts` |
 | Film templates: list, save (strips audio), cover render, apply to a new project | `server/templates.ts`, `templates/films/` |
+| Clone a video: cut detection, reference frames and contact sheets, soundtrack, placeholder scenes (`film/reference.js`) and the imported cut; `compare` renders a shot next to the reference | `server/video.ts`, `scripts/compare.ts` |
+| Duplicate a project (keeps film, timeline, audio, reference; drops exports and history) | `duplicateProject` in `server/projects.ts` |
 | Headless Chrome (thumbnails, frames), MP4 export jobs | `server/chrome.ts`, `server/export.ts` |
 | UI state (external store, snapshot undo, autosave) | `src/lib/store.ts` |
 | Timeline edits (split, hold, anchors, takes, fit-to-VO) | `src/lib/actions.ts` |

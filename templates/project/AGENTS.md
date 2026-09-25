@@ -26,7 +26,8 @@ If that path no longer exists, Shot has moved: ask where it is now (it's the fol
 | `audio/vo`, `audio/music`, `audio/sfx` | Generated takes, Lyria tracks, uploads. | tools |
 | `exports/` | Rendered MP4s (+ the mixed WAV). Git-ignored. | tools |
 | `.history/` | Last 40 saves of `timeline.json`. Git-ignored. | tools |
-| `.frames/` | Stills from `frame`. Git-ignored. | tools |
+| `.frames/` | Stills from `frame` and `compare`. Git-ignored. | tools |
+| `reference/` | Only in projects cloned from a video: the video, its shots and their frames. See "Rebuilding the reference video" if this file has it. | tools |
 
 ## The scene contract
 
@@ -104,6 +105,7 @@ Each is `npm --prefix "{{STUDIO}}" run <command> -- . [options]` from this folde
 | `music -- . "prompt"` | Lyria track timed to the current cut's sections, placed on the Music track. `--dry` prints the prompt only. |
 | `render -- .` | Full MP4 with the audio mix into `exports/`. `--draft` for 540p. |
 | `bundle -- .` | One self-contained HTML of the current cut (scripts, styles, fonts, images inlined) for sharing or a design chat. |
+| `compare -- . 12.5` | Projects cloned from a video only: the frame next to the reference video at the same moment, with a similarity score (SSIM). `--shot shot-03` across one shot, `--sheet` every shot. |
 
 ## Templates
 

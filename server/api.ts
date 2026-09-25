@@ -12,7 +12,7 @@ import { authStatus, designVoice } from "./gemini.ts";
 import { makeMusic, makeTake, stretched } from "./media.ts";
 import { listTemplates, saveTemplate, templateDir } from "./templates.ts";
 import {
-  filmVersion, forgetProject, listAssets, listProjects, newProjectDefaults, openProjectFolder, projectDir, projectFile,
+  duplicateProject, filmVersion, forgetProject, listAssets, listProjects, newProjectDefaults, openProjectFolder, projectDir, projectFile,
   scaffoldProject, timelineVersion, readTimeline, saveAsset, slugify, writeTimeline,
   type Ctx,
 } from "./projects.ts";
@@ -30,11 +30,13 @@ function pick(kind: string, start?: string): Promise<string | null> {
   if (process.platform !== "darwin") return Promise.resolve(null);
   const loc = start && existsSync(start) ? ` default location (POSIX file ${JSON.stringify(start)})` : "";
   const script =
-    kind === "design"
-      ? `choose file with prompt "Pick a design from Claude: a zip, a film.html, or cancel and type a folder path"${loc} of type {"public.zip-archive", "public.html", "com.pkware.zip-archive"}`
-      : kind === "project"
-        ? `choose folder with prompt "Pick a video project folder (the one with film.html)"${loc}`
-        : `choose folder with prompt "Where should the new video project folder go?"${loc}`;
+    kind === "video"
+      ? `choose file with prompt "Pick a video to clone"${loc} of type {"public.movie"}`
+      : kind === "design"
+        ? `choose file with prompt "Pick a design from Claude: a zip, a film.html, or cancel and type a folder path"${loc} of type {"public.zip-archive", "public.html", "com.pkware.zip-archive"}`
+        : kind === "project"
+          ? `choose folder with prompt "Pick a video project folder (the one with film.html)"${loc}`
+          : `choose folder with prompt "Where should the new video project folder go?"${loc}`;
   return new Promise((resolve) => {
     execFile("osascript", ["-e", "activate", "-e", `POSIX path of (${script})`], { timeout: 10 * 60 * 1000 }, (err, stdout) => {
       resolve(err ? null : stdout.trim().replace(/\/$/, "") || null);
@@ -90,17 +92,26 @@ export function createApi(ctx: Ctx) {
 
   on("GET", /^\/api\/new-defaults$/, async (_m, _q, res) => send(res, 200, newProjectDefaults(ctx)));
 
-  // new project: POST /api/projects { name, title?, parent?, from? } -> { id, dir }
+  // new project: POST /api/projects { name, title?, parent?, from? | video? | template? [aspect?] } -> { id, dir }
   on("POST", /^\/api\/projects$/, async (_m, req, res) => {
     const b = await readJson(req);
     if (!String(b.name || "").trim()) return send(res, 400, { error: "Give the project a name." });
-    send(res, 200, await scaffoldProject(ctx, { name: b.name, title: b.title, parent: b.parent || undefined, from: b.from || null, template: b.template || null }));
+    send(res, 200, await scaffoldProject(ctx, {
+      name: b.name, title: b.title, parent: b.parent || undefined, from: b.from || null, template: b.template || null, video: b.video || null, aspect: b.aspect || null,
+      log: (s) => console.log(`[studio] ${b.name}: ${s}`),
+    }));
   });
 
   // add an existing project folder: POST /api/projects/open { path }
   on("POST", /^\/api\/projects\/open$/, async (_m, req, res) => {
     const b = await readJson(req);
     send(res, 200, openProjectFolder(ctx, String(b.path || "")));
+  });
+
+  // copy a project next to it: POST /api/projects/:p/duplicate { title?, parent? } -> { id, dir }
+  on("POST", /^\/api\/projects\/([^/]+)\/duplicate$/, async (m, req, res) => {
+    const b = await readJson(req);
+    send(res, 200, await duplicateProject(ctx, m[1], { title: b.title || undefined, parent: b.parent || undefined }));
   });
 
   on("POST", /^\/api\/projects\/([^/]+)\/forget$/, async (m, _q, res) => { forgetProject(m[1]); send(res, 200, { ok: true }); });
@@ -111,7 +122,7 @@ export function createApi(ctx: Ctx) {
     send(res, 200, { ok: true, dir });
   });
 
-  // native macOS pickers: POST /api/pick { kind: "folder" | "design" | "project", start? } -> { path | null }
+  // native macOS pickers: POST /api/pick { kind: "folder" | "design" | "video" | "project", start? } -> { path | null }
   on("POST", /^\/api\/pick$/, async (_m, req, res) => {
     const b = await readJson(req);
     send(res, 200, { path: await pick(b.kind, b.start) });

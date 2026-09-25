@@ -18,7 +18,7 @@ Install Shot for me: clone https://github.com/connorguy/shot to ~/shot and follo
 
 Your agent checks for Node, Chrome and ffmpeg, installs Shot, sets up voice if you want it, adds the film-design skill and opens the studio. The steps it follows are in [SETUP.md](SETUP.md).
 
-Then press **New**. That's most of the manual.
+Then pick **File → New project**, a starting point and an aspect (landscape, portrait or square). That's most of the manual.
 
 ### By hand
 
@@ -48,6 +48,8 @@ Keys and tokens stay on your machine, in the local server.
 3. **Tinker.** Open it in Shot. Drag edges to retime, reorder scenes, generate voiceover paced to each clip, and score it.
 4. **Ship.** Export an MP4, or bundle the film as a single HTML file.
 
+Already have a video you want as code? Pick **File → New project → Clone a video**. Shot finds the cuts, saves reference frames and the soundtrack, and gives you one placeholder scene per shot at the original timing. Then your agent rebuilds each shot and checks it against the original with `compare`.
+
 More on the pipeline in [PIPELINE.md](PIPELINE.md). The scene contract is in [film-kit/README.md](film-kit/README.md).
 
 ## Things worth knowing
@@ -55,7 +57,8 @@ More on the pipeline in [PIPELINE.md](PIPELINE.md). The scene contract is in [fi
 - **Agents are first-class.** Every project gets an `AGENTS.md` (Codex) and a `CLAUDE.md` (Claude Code), so an agent started in the project folder already knows the scene contract, the timeline and the tools. Press **P** on any clip, line or frame to copy a short prompt with the exact file and timing. The studio reloads when files change on disk.
 - **Voiceover lands on the frame.** Drag a line to the length you want. Gemini or ElevenLabs paces the read toward that length, and a pitch-safe stretch fixes whatever's left. Every take is kept.
 - **Music ducks by itself** under every line.
-- **Templates** keep a film's look and cut but none of its audio. Use **Save as template** in the inspector, and pick one from **New**.
+- **File → Duplicate** copies the project you have open (film, timeline and audio) into a new folder next to it, for a variant or a safe experiment.
+- **Templates** keep a film's look and cut but none of its audio. Use **Save as template** in the inspector, and pick one from **File → New project**.
 - **Preview is the export.** The same frames and the same audio mix, just smaller.
 - **Undo is deep.** Use ⌘Z. The last 40 saves are kept in `.history/`.
 - **Films are code.** A design runs in your browser, next to the studio, so only open designs you trust.
@@ -67,10 +70,12 @@ Keys: `T` trim · `S` split · `H` hold · `P` prompt · `[` `]` hide side panel
 Anything the studio does, the CLI does too. `<p>` is a project folder.
 
 ```sh
-npm run new -- <name> [--dir <parent>] [--from design.zip] [--template <id>]
+npm run new -- <name> [--dir <parent>] [--template <id>] [--aspect portrait|square] [--from design.zip] [--video clip.mp4]
 npm run open -- <folder>              # open a project that lives anywhere
+npm run duplicate -- <p> ["Title"]    # copy a project next to it
 npm run inspect -- <p>                # cut, scenes, audio, warnings
 npm run frame -- <p> 12.5             # PNG of one moment (--sheet for all of them)
+npm run compare -- <p> 12.5           # cloned from a video: film next to the original (--shot <id>, --sheet)
 npm run vo -- <p> [--draft] [--all]   # voice the lines (--engine elevenlabs to switch)
 npm run music -- <p> "mood"
 npm run render -- <p> [--draft]       # → exports/*.mp4

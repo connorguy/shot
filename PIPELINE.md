@@ -22,13 +22,15 @@ Iterate on the look here. Design sessions are best at composition, motion vocabu
 
 ## 3. New project
 
-In the studio, click **New…**, name it, pick where it lives on disk, and choose **A design from Claude** (the zip, a `film.html`, or a folder). Or skip the design and start from the starter scenes. From a terminal:
+In the studio, pick **File → New project…**, name it, pick where it lives on disk, and choose **A design from Claude** (the zip, a `film.html`, or a folder). Or skip the design and start from a template, in landscape (1920×1080), portrait (1080×1920) or square (1080×1080). From a terminal:
 
 ```sh
 npm run new -- launch-v2 --dir ~/Movies --from ~/Downloads/launch-v2.zip
 ```
 
 Every project gets `AGENTS.md` and `CLAUDE.md`, so any agent opening the folder knows the layout, the contract, and how to run the tools from there (`npm --prefix <shot> run inspect -- .`).
+
+To recreate an existing video instead, choose **Clone a video** (or `npm run new -- launch-v2 --dir ~/Movies --video ~/Movies/launch.mp4`). Shot detects the cuts, samples frames from every shot, puts the soundtrack on the Music track, and makes one placeholder scene per shot at the original timing. A shot scene's clock is the source video's time, so `npm run compare` can render any shot next to the original and score it while an agent rebuilds the shots as code. The project's `AGENTS.md` gets the full loop.
 
 ## 4. Tinker
 

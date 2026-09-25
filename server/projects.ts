@@ -4,12 +4,13 @@
 // (~/.shot/projects.json) and addressed by a short id everywhere (API routes, CLI, caches).
 import { execFile, execFileSync } from "node:child_process";
 import { existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, realpathSync, statSync, writeFileSync } from "node:fs";
-import { copyFile, mkdir, readdir, readFile, rename, rm, stat, writeFile } from "node:fs/promises";
+import { copyFile, cp, mkdir, readdir, readFile, rename, rm, stat, writeFile } from "node:fs/promises";
 import { homedir, tmpdir } from "node:os";
 import { basename, dirname, extname, join, relative, resolve, sep } from "node:path";
 import { promisify } from "node:util";
-import { normalizeTimeline, type Timeline } from "../shared/timeline.ts";
-import { applyTemplate } from "./templates.ts";
+import { ASPECTS, normalizeTimeline, type Aspect, type Timeline } from "../shared/timeline.ts";
+import { applyTemplate, setStageSize } from "./templates.ts";
+import { importVideo, VIDEO_EXT } from "./video.ts";
 
 const run = promisify(execFile);
 
@@ -206,11 +207,16 @@ export interface NewProject {
   parent?: string; // where to create it; default shot/projects
   from?: string | null; // optional design: a film .html, a .zip, or a folder with film.html
   template?: string | null; // templates/films/<id> to start from when there's no design (default "starter")
+  aspect?: Aspect | null; // stage size for a template start (default: the template's own); designs and videos keep theirs
+  video?: string | null; // clone a video: placeholder scenes per shot, reference frames and the soundtrack
+  threshold?: number; // video: scene-change score that counts as a cut (0..1, default 0.3)
+  log?: (s: string) => void;
 }
 
 /** Create a project folder with everything an agent or person needs, then register it.
  *  Always from templates/project: AGENTS.md (layout, contract, timeline, commands), CLAUDE.md, brief.md, .gitignore.
- *  Film: the design passed in `from`, or a film template (templates/films/<id>, default "starter"). Returns { id, dir }. */
+ *  Film: the design passed in `from`, placeholders cloned from `video`, or a film template (templates/films/<id>,
+ *  default "starter"). Returns { id, dir }. */
 export async function scaffoldProject(ctx: Ctx, p: NewProject) {
   const parent = resolve(expandHome(p.parent || ctx.projectsDir));
   const slug = slugify(p.name);
@@ -220,9 +226,14 @@ export async function scaffoldProject(ctx: Ctx, p: NewProject) {
   }
   if (!existsSync(dirname(parent))) throw new Error(`${dirname(parent)} does not exist.`);
 
+  if (p.aspect && !(p.aspect in ASPECTS)) throw new Error(`Aspect is one of ${Object.keys(ASPECTS).join(", ")}.`);
   // resolve the design source first so a bad source leaves nothing behind
-  let html: string | null = null, designDir: string | null = null;
-  if (p.from) {
+  let html: string | null = null, designDir: string | null = null, video: string | null = null;
+  if (p.video) {
+    video = resolve(expandHome(p.video));
+    if (!existsSync(video) || !statSync(video).isFile()) throw new Error(`Video not found: ${video}`);
+    if (!VIDEO_EXT.has(extname(video).toLowerCase())) throw new Error(`Pick a video file (${[...VIDEO_EXT].join(", ")}).`);
+  } else if (p.from) {
     const src = resolve(expandHome(p.from));
     if (!existsSync(src)) throw new Error(`Design not found: ${src}`);
     if (src.toLowerCase().endsWith(".html")) html = readFileSync(src, "utf8");
@@ -244,8 +255,21 @@ export async function scaffoldProject(ctx: Ctx, p: NewProject) {
   const title = (p.title || p.name).trim();
   const studioRef = insideDefault(ctx, dir) ? "../.." : ctx.root.replace(/\/+$/, "");
   const fill = (s: string) => s.replaceAll("{{TITLE}}", title).replaceAll("{{NAME}}", slug).replaceAll("{{STUDIO}}", studioRef);
+  const existed = existsSync(dir);
   await copyTree(join(ctx.root, "templates", "project"), dir, fill, () => false);
-  if (!html && !designDir) await applyTemplate(ctx, p.template || "starter", dir, fill, title);
+  if (video) {
+    const starter = join(ctx.root, "templates", "films", "starter", "film");
+    const lib = fill(await readFile(join(starter, "lib.js"), "utf8")), styles = await readFile(join(starter, "styles.css"), "utf8");
+    try {
+      await importVideo(video, dir, title, { lib, styles }, { threshold: p.threshold, log: p.log });
+    } catch (e) {
+      if (!existed) await rm(dir, { recursive: true, force: true });
+      throw e;
+    }
+  } else if (!html && !designDir) {
+    await applyTemplate(ctx, p.template || "starter", dir, fill, title);
+    if (p.aspect) await setStageSize(dir, p.aspect);
+  }
   if (designDir) await copyTree(designDir, dir, (s) => s, (r) => ["AGENTS.md", "CLAUDE.md", "timeline.json"].includes(r) || r.startsWith("exports") || r.startsWith(".history"));
   if (html != null) await writeFile(join(dir, "film.html"), html);
 
@@ -268,6 +292,36 @@ export async function scaffoldProject(ctx: Ctx, p: NewProject) {
   return { id, dir };
 }
 
+/** Copy a project to a new folder (default: next to it, "<name>-copy") and register it. Keeps the film, the
+ *  timeline, audio and reference; leaves out renders, history and stills, which belong to the original. */
+export async function duplicateProject(ctx: Ctx, id: string, o: { title?: string; parent?: string } = {}) {
+  const src = projectDir(ctx, id);
+  if (!isFilmDir(src)) throw new Error(`No project "${id}".`);
+  const tl = await readTimeline(ctx, id);
+  const oldTitle = tl?.name || basename(src);
+  const title = (o.title || `${oldTitle} copy`).trim();
+  const parent = resolve(expandHome(o.parent || dirname(src)));
+  const dir = join(parent, slugify(title));
+  if (existsSync(dir) && readdirSync(dir).filter((f) => !f.startsWith(".")).length) {
+    throw new Error(`${dir} already exists and isn't empty. Pick another name.`);
+  }
+  const skip = new Set(["exports", ".history", ".frames", ".git", "node_modules"]);
+  await cp(src, dir, { recursive: true, filter: (from) => { const r = relative(src, from); return !skip.has(r.split(sep)[0]) && basename(from) !== ".DS_Store"; } });
+  await mkdir(join(dir, "exports"), { recursive: true });
+  if (tl) {
+    tl.name = title;
+    delete tl.updatedAt;
+    await writeFile(join(dir, "timeline.json"), JSON.stringify(tl, null, 2) + "\n");
+  }
+  // the docs' headings name the film
+  for (const f of ["AGENTS.md", "brief.md"]) {
+    const p = join(dir, f), head = `# ${oldTitle}:`;
+    const text = existsSync(p) ? await readFile(p, "utf8") : "";
+    if (text.startsWith(head)) await writeFile(p, `# ${title}:${text.slice(head.length)}`);
+  }
+  return { id: registerProject(ctx, dir), dir };
+}
+
 /** Add an existing project folder (must contain film.html) to the studio. */
 export function openProjectFolder(ctx: Ctx, path: string) {
   const dir = resolve(expandHome(path));
@@ -287,7 +341,7 @@ export async function timelineVersion(ctx: Ctx, id: string): Promise<string | nu
   return existsSync(p) ? fileVersion(p) : null;
 }
 
-const NOT_FILM = new Set(["audio", "exports", "node_modules", "timeline.json"]);
+const NOT_FILM = new Set(["audio", "exports", "node_modules", "reference", "timeline.json"]);
 
 /** Version of everything that can change a frame: newest mtime among the project's film sources
  *  (film.html, scene files, styles, assets), ignoring audio, exports, timeline, dotfiles and docs. */

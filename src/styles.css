@@ -80,6 +80,22 @@ kbd { font: 10.5px ui-monospace, "SF Mono", Menlo, monospace; background: var(--
 .path-btns { display: inline-flex; gap: 3px; }
 .path-btns button { color: var(--muted); }
 .path-btns button:hover:not(:disabled), .path-btns button.on { color: var(--ink); }
+.menu { position: relative; }
+.menu > button { display: inline-flex; align-items: center; gap: 6px; }
+.menu > button svg { color: var(--muted); }
+.menu-list {
+  position: absolute; top: calc(100% + 4px); left: 0; z-index: 30; min-width: 250px; padding: 4px;
+  display: flex; flex-direction: column; background: var(--white); border: 1px solid var(--line2); border-radius: 9px;
+  box-shadow: 0 10px 28px rgba(19, 19, 18, 0.16), 0 1px 2px rgba(19, 19, 18, 0.08);
+}
+.menu-list button {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 1px; width: 100%; padding: 6px 10px; min-height: 0;
+  background: none; border: 0; border-radius: 6px; box-shadow: none; text-align: left;
+}
+.menu-list button:hover:not(:disabled), .menu-list button:focus-visible { background: var(--accent-soft); outline: none; }
+.menu-list button:active:not(:disabled) { transform: none; box-shadow: none; }
+.menu-list small { color: var(--dim); font-size: 11px; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.menu-sep { height: 1px; margin: 4px 6px; background: var(--line); }
 .sep { width: 1px; height: 22px; background: var(--line2); margin: 0 4px; }
 .save { font-size: 10.5px; text-transform: uppercase; color: var(--dim); min-width: 64px; }
 .save.dirty, .save.saving { color: var(--muted); }
@@ -223,6 +239,8 @@ textarea.prompt-preview { margin-top: 8px; font-size: 11.5px; color: var(--muted
 .seg.big button { flex: 1; display: flex; flex-direction: column; padding: 8px; gap: 2px; font-weight: 500; }
 .seg.big button span { font-weight: 400; font-size: 11.5px; color: var(--dim); }
 .seg.big button.on span { color: #b9b8b3; }
+.seg.aspect { margin: 2px 0 8px; }
+.seg.aspect i { display: block; height: 16px; margin: 0 auto 4px; border: 1.5px solid currentColor; border-radius: 2px; }
 
 /* timeline */
 .timeline { height: 100%; display: flex; flex-direction: column; min-height: 0; }

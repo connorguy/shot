@@ -125,13 +125,22 @@ export function NewProjectDialog({ onCreated }: { onCreated: (id: string) => voi
       )}
       {start !== "video" && styles.length > 0 && (
         <>
-          <label>Style
-            <select value={style} onChange={(e) => setStyle(e.target.value)}>
-              <option value="">None: follow the brief and the template</option>
-              {styles.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
-            </select>
-          </label>
-          {style && <p className="panel-note">{styles.find((s) => s.id === style)?.description} Saved as <code>style.md</code>: art direction agents follow when they design or change scenes.</p>}
+          <label>Style</label>
+          <div className="tpl-grid styles" role="radiogroup" aria-label="Style">
+            <button className={`tpl ${style === "" ? "on" : ""}`} role="radio" aria-checked={style === ""} onClick={() => setStyle("")} title="Follow the brief and the template">
+              <span className="noprev">–</span>
+              <b>None</b>
+            </button>
+            {styles.map((s) => (
+              <button key={s.id} className={`tpl ${style === s.id ? "on" : ""}`} role="radio" aria-checked={style === s.id} onClick={() => setStyle(s.id)} title={s.description}>
+                {s.hasPreview ? <img src={api.stylePreview(s.id)} alt="" loading="lazy" /> : <span className="noprev" />}
+                <b>{s.name}</b>
+              </button>
+            ))}
+          </div>
+          <p className="panel-note">{style
+            ? <>{styles.find((s) => s.id === style)?.description} Saved as <code>style.md</code>: art direction agents follow when they design or change scenes.</>
+            : "No style: agents take the look from the brief and the template."}</p>
         </>
       )}
       {start === "video" && (

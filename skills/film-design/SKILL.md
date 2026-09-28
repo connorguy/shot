@@ -54,7 +54,7 @@ If the environment can only produce one file (for example a chat artifact), inli
 
 ## Look and craft
 
-1. **Pick the look before any scene.** If the brief or the user names a style, use it. Otherwise pick the preset in `references/styles/` that fits the brief (`README.md` there lists them), tell the user which one and why, and save it as `style.md`. The brand's colors, type and logo override a preset's; its layout and motion rules still hold.
+1. **Pick the look before any scene.** If the brief or the user names a style, use it. Otherwise pick the preset in `references/styles/` that fits the brief (`README.md` there lists them and the render costs), tell the user which one and why, and save it as `style.md`. `references/styles/gallery/film/scenes/<id>.js` is a worked example of each: read it for technique, but don't copy its layout. The brand's colors, type and logo override a preset's; its layout and motion rules still hold.
 2. **Set it up once.**
    - Put color and type tokens on `:root` in `styles.css`.
    - Put `EASE`, `DUR` and the grid in `lib.js`.

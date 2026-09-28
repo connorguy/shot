@@ -41,6 +41,11 @@ Fonts: `font -- . "Jost:ital,wght@0,100..900;1,100..900"`.
 - **Texture of time:** pass `t` through `twos()` for scenes that should feel handmade, and add `jitter()` of 1 px to held shapes.
 - **Type:** arrives through a mask or on the back of a shape that wipes past. It never fades.
 
+## Signature moves
+1. **Bars.** Six horizontal bars of mixed lengths slide in from alternating edges, each with a different duration from `DUR`. The title is revealed in the gaps between them.
+2. **Shape becomes the scene.** Scene A ends with a red circle scaling to cover the frame (0.6 s, `EASE.slide`). Scene B opens on that same red and cuts its first shape out of it.
+3. **Paper drop.** A shape falls into place with `spring(s, 0.5, 0.15)`, drawn on twos with 1 px of jitter while it holds. It has no shadow: the paper sits flat on the page.
+
 ## Devices
 - Rectangles, circles, half circles and triangles with hard edges, cut by `clip-path`.
 - Misregistration: offset the color layer 2–4 px from the black layer.

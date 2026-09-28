@@ -358,4 +358,7 @@ code.path { display: block; white-space: nowrap; overflow: hidden; text-overflow
 .tpl b { font-weight: 500; font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .tpl span:last-child { font-size: 10.5px; color: var(--dim); text-transform: uppercase; letter-spacing: 0.02em; }
 .tpl.on { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); background: var(--accent-soft); }
+.tpl-grid.styles { grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); max-height: 236px; }
+.tpl-grid.styles .tpl { padding: 4px; }
+.tpl-grid.styles .tpl b { font-size: 11.5px; }
 dialog.savetpl img.cover { width: 100%; border-radius: 4px; margin-bottom: 10px; background: #fff; aspect-ratio: 16/9; object-fit: cover; box-shadow: 0 0 0 1px var(--line); }

@@ -6,9 +6,11 @@ import { readdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
 import type { Ctx } from "./projects.ts";
 
-export interface StyleInfo { id: string; name: string; description: string }
+export interface StyleInfo { id: string; name: string; description: string; hasPreview: boolean }
 
 const stylesDir = (ctx: Ctx) => join(ctx.root, "styles");
+/** The cover rendered from the style's gallery example (npm run style-gallery). */
+export const stylePreview = (ctx: Ctx, id: string) => join(stylesDir(ctx), "previews", `${id}.jpg`);
 
 /** "---\nname: Swiss\ndescription: …\n---" at the top of a preset. */
 function frontmatter(text: string): Record<string, string> {
@@ -28,7 +30,8 @@ export async function listStyles(ctx: Ctx): Promise<StyleInfo[]> {
   for (const f of (await readdir(dir)).sort()) {
     if (!f.endsWith(".md") || f === "README.md") continue;
     const fm = frontmatter(await readFile(join(dir, f), "utf8"));
-    out.push({ id: f.slice(0, -3), name: fm.name || f.slice(0, -3), description: fm.description || "" });
+    const id = f.slice(0, -3);
+    out.push({ id, name: fm.name || id, description: fm.description || "", hasPreview: existsSync(stylePreview(ctx, id)) });
   }
   return out;
 }

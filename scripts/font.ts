@@ -3,57 +3,38 @@
 // @font-face rules at the top of film/styles.css (replacing earlier rules for the same families). Families use
 // the Google Fonts css2 syntax; a plain name ("Anton") gets the default weight. Films must not load fonts
 // from the network at render time, so this is how a style's fonts get into a project.
-import { existsSync } from "node:fs";
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+// --text auto (every character in film.html and film/**/*.js) or --text "…" bundles just those characters in any
+// script: use it for Japanese, Chinese or Korean, and run it again when the copy changes.
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
+import { bundleFonts } from "../server/fonts.ts";
 import { projectDir } from "../server/projects.ts";
 import { ctx, die, parseArgs, requireProject } from "./_lib.ts";
 
-const usage = 'npm run font -- <p> "Family[:axes]" …   e.g. "Inter Tight:wght@100..900" "Instrument Serif:ital@0;1"';
+const usage = 'npm run font -- <p> "Family[:axes]" … [--text auto|"…"]   e.g. "Inter Tight:wght@100..900" "Instrument Serif:ital@0;1"';
 const args = parseArgs();
 const project = requireProject(args._[0], usage);
 const families = args._.slice(1);
 if (!families.length) die(`usage: ${usage}`);
 
 const dir = projectDir(ctx, project);
-const cssPath = join(dir, "film", "styles.css");
-if (!existsSync(cssPath)) die("No film/styles.css. Split the single-file film into film/ first (see AGENTS.md).");
-
-// a current browser's user agent, so the API answers with woff2
-const UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36";
-const url = `https://fonts.googleapis.com/css2?${families.map((f) => `family=${encodeURIComponent(f).replace(/%20/g, "+")}`).join("&")}&display=block`;
-const res = await fetch(url, { headers: { "User-Agent": UA } });
-if (!res.ok) die(`Google Fonts said ${res.status} for ${families.join(", ")}. Check the names and axes at fonts.google.com.`);
-const css = await res.text();
-
-// only the "/* latin */" subset: enough for English copy, a fraction of the size
-const faces = [...css.matchAll(/\/\* latin \*\/\s*@font-face\s*\{([^}]*)\}/g)].map((m) => {
-  const get = (k: string) => new RegExp(`${k}:\\s*([^;]+);`).exec(m[1])?.[1].trim() || "";
-  return { family: get("font-family").replace(/['"]/g, ""), style: get("font-style"), weight: get("font-weight"), stretch: get("font-stretch"), src: /url\(([^)]+)\)/.exec(m[1])?.[1] || "" };
-});
-if (!faces.length) die(`No Latin fonts in the response for ${families.join(", ")}.`);
-
-await mkdir(join(dir, "film", "assets", "fonts"), { recursive: true });
-const slug = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
-const rules: string[] = [];
-for (const f of faces) {
-  const file = `${slug(f.family)}-${f.style}-${slug(f.weight)}.woff2`;
-  const r = await fetch(f.src);
-  if (!r.ok) die(`Download failed (${r.status}): ${f.src}`);
-  await writeFile(join(dir, "film", "assets", "fonts", file), Buffer.from(await r.arrayBuffer()));
-  rules.push(`@font-face { font-family: "${f.family}"; font-style: ${f.style}; font-weight: ${f.weight};${f.stretch ? ` font-stretch: ${f.stretch};` : ""} font-display: block; src: url(assets/fonts/${file}) format("woff2"); }`);
-  console.log(`film/assets/fonts/${file}  ${f.family} ${f.style} ${f.weight}`);
+/** Every character the film's code contains: its copy, and some code, which costs a few glyphs. */
+function filmText(): string {
+  const files = [join(dir, "film.html")];
+  const walk = (d: string) => { for (const e of readdirSync(d, { withFileTypes: true })) { const p = join(d, e.name); if (e.isDirectory() && e.name !== "assets") walk(p); else if (e.name.endsWith(".js") && e.name !== "film-kit.js") files.push(p); } };
+  if (existsSync(join(dir, "film"))) walk(join(dir, "film"));
+  return files.filter((f) => existsSync(f)).map((f) => readFileSync(f, "utf8")).join("").replace(/\s/g, "") + " ";
 }
+const text = args.flags.text === "auto" ? filmText() : typeof args.flags.text === "string" ? args.flags.text : undefined;
 
-// drop earlier rules for these families, then put the new ones after the file's opening comment
-const names = new Set(faces.map((f) => f.family));
-let text = (await readFile(cssPath, "utf8")).replace(/@font-face\s*\{[^}]*\}\n?/g, (rule) => {
-  const fam = /font-family:\s*["']?([^"';]+)/.exec(rule)?.[1].trim();
-  return fam && names.has(fam) ? "" : rule;
-});
-const head = /^\/\*[\s\S]*?\*\/\n/.exec(text)?.[0] || "";
-text = head + rules.join("\n") + "\n" + text.slice(head.length);
-await writeFile(cssPath, text);
-console.log(`\nWrote ${rules.length} @font-face rule(s) to film/styles.css. Use them with font-family: ${[...names].map((n) => `"${n}"`).join(", ")}.
+try {
+  const faces = await bundleFonts(join(dir, "film"), families, text);
+  for (const f of faces) console.log(`film/${f.file}  ${f.family} ${f.style} ${f.weight}`);
+  const names = [...new Set(faces.map((f) => `"${f.family}"`))];
+  console.log(`\nWrote ${faces.length} @font-face rule(s) to film/styles.css. Use them with font-family: ${names.join(", ")}.
 film.before() in film/lib.js must load them before scenes measure text (the starter's loads every @font-face).
+${text ? `Only the ${new Set(text).size} characters asked for are bundled: run this again with --text when the copy changes.` : "Only the Latin subset is bundled: symbols such as → may fall back to another font. --text bundles any script."}
 Google Fonts are OFL or Apache licensed, so bundling them in a film is fine.`);
+} catch (e: any) {
+  die(e.message);
+}

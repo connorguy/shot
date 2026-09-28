@@ -32,6 +32,7 @@
     "render": "node scripts/render.ts",
     "bundle": "node scripts/bundle.ts",
     "font": "node scripts/font.ts",
+    "style-gallery": "node scripts/style-gallery.ts",
     "pack-skill": "node scripts/pack-skill.ts"
   },
   "dependencies": {

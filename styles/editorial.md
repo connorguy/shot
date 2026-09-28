@@ -9,7 +9,7 @@ It reads like a well-set magazine spread that happens to move: type is large, li
 ## Look at
 - **The New York Times Magazine covers (Gail Bichler's era).** Type used as the image, cropped by the frame, with one word turned by italic or scale.
 - **Kinfolk and Cereal.** Generous paper, small quiet labels, photographs given room.
-- **Kenya Hara's MUJI.** Emptiness as a material: when in doubt, leave it out.
+- **Jop van Bennekom's *Fantastic Man* and *The Gentlewoman*.** Plain, confident typography, where long captions and the words themselves are the design.
 
 ## Tokens
 ```css
@@ -43,6 +43,11 @@ Fonts: `font -- . "Newsreader:ital,opsz,wght@0,6..72,200..800;1,6..72,200..800" 
 - **Transitions:** dissolves of `DUR.xfade`, or a clip-path wipe like a turned page. Cuts come at the ends of sentences.
 - **Holds:** hold each finished line for at least 2 s, and set no scene shorter than 3 s.
 - **What never happens:** no scale-ins on type, no blur on type, no springs.
+
+## Signature moves
+1. **Cropped headline.** A 300 px display line starts with its first letters cut off by the left frame edge and rises through its mask. The next line follows 0.12 s later. The italic word lands in `--accent` 0.2 s after its line.
+2. **Pull quote.** A 400 px quote mark fades in slowly in `--accent` (0.8 s, `EASE.soft`). The quote reveals line by line, 0.12 s apart. After a 0.6 s hold, the attribution arrives as a `.label`.
+3. **Page turn.** In the last 0.45 s of a scene, its content wipes away from right to left behind a 1 px `--rule` line (`clip-path`, `EASE.in`). The next scene's first 0.45 s wipes its content in the same direction behind the same line. The cut falls where the line reaches the left edge. Scenes are independent, so each one does its own half.
 
 ## Devices
 - 1 px column rules in `--rule`.

@@ -46,6 +46,11 @@ Fonts: `font -- . "Archivo:wdth,wght@62..125,100..900"` (the width axis runs 62â
 - Cuts land on beats. Scenes last whole bars (`beat(4)`, `beat(8)`).
 - No fades anywhere: things are either there or not.
 
+## Signature moves
+1. **Stack.** One word repeats in 7 rows. The rows slide in from alternating sides, `beat(1/8)` apart, and all of them lock into alignment on the next downbeat.
+2. **Axis walk.** A single word in a fixed, right-aligned box steps from wdth 62 to 125 in 8 steps over 2 beats while weight steps from 900 to 300. The box never moves; only the letterforms change.
+3. **Polarity drop.** On the downbeat of bar 4, background and ink swap and the word jumps to a scale that crops past the frame, as a cut with no transition.
+
 ## Devices
 - Repetition, cropping, axis stepping, polarity flips.
 - A single `--accent` word, once or twice per film.

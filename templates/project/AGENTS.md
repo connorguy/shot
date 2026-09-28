@@ -59,7 +59,7 @@ Adding a scene: create `film/scenes/<id>.js`, add its `<script>` tag to `film.ht
 
 ## Design quality
 
-`brief.md` says what the film says. `style.md`, if there is one, says how it looks. Read both before you touch a scene. With no `style.md`, take the look from the brief's brand section. If the brand section is thin, copy the closest preset from `{{STUDIO}}/styles/` to `style.md` and tell the user which one you picked. In a project cloned from a video, the reference is the style: match it rather than a preset.
+`brief.md` says what the film says. `style.md`, if there is one, says how it looks. Read both before you touch a scene. With no `style.md`, take the look from the brief's brand section. If the brand section is thin, copy the closest preset from `{{STUDIO}}/styles/` to `style.md` and tell the user which one you picked. Each preset has a worked example scene in `{{STUDIO}}/styles/gallery/film/scenes/<id>.js`: read it for technique, but don't copy its layout. In a project cloned from a video, the reference is the style: match it rather than a preset.
 
 Set the look up once, before you write scenes:
 - Bundle the fonts with the `font` command.
@@ -67,6 +67,8 @@ Set the look up once, before you write scenes:
 - Put easing, durations and the grid in `film/lib.js`.
 
 Scenes use those tokens and don't invent colors, sizes or curves of their own.
+
+Some effects cost a lot of export time. Big `filter: blur()` renders 3.5× slower (use a `radial-gradient` for glows), grain reseeded every frame costs +70% (reseed it on twos), and large soft shadows cost +70%. The table is in `{{STUDIO}}/styles/README.md`.
 
 These rules hold in every style. A `style.md` can change the numbers, not the ideas.
 
@@ -153,7 +155,7 @@ Each is `npm --prefix "{{STUDIO}}" run <command> -- . [options]` from this folde
 | `vo -- .` | Generate takes for VO lines without audio, with the project's engine (Gemini or ElevenLabs; `--engine` overrides, `--draft` uses free macOS `say`). `--all` regenerates every line; `--line vo_a1` one line. |
 | `music -- . "prompt"` | Lyria track timed to the current cut's sections, placed on the Music track. `--dry` prints the prompt only. |
 | `render -- .` | Full MP4 with the audio mix into `exports/`. `--draft` for 540p. |
-| `font -- . "Family:axes" …` | Downloads Google Fonts (css2 syntax, e.g. `"Inter Tight:wght@100..900"`) into `film/assets/fonts/` and writes their `@font-face` rules into `film/styles.css`. Films can't load fonts from the network at render time. Only the Latin subset is bundled, so symbols such as → may fall back to another font: check a frame. |
+| `font -- . "Family:axes" …` | Downloads Google Fonts (css2 syntax, e.g. `"Inter Tight:wght@100..900"`) into `film/assets/fonts/` and writes their `@font-face` rules into `film/styles.css`. Films can't load fonts from the network at render time. Only the Latin subset is bundled unless you pass `--text auto`, which bundles exactly the characters the film uses, in any script (Japanese, symbols like → ❯). Run it again after the copy changes. |
 | `bundle -- .` | One self-contained HTML of the current cut (scripts, styles, fonts, images inlined) for sharing or a design chat. |
 | `compare -- . 12.5` | Projects cloned from a video only: the frame next to the reference video at the same moment, with a similarity score (SSIM). `--shot shot-03` across one shot, `--sheet` every shot. |
 

@@ -48,6 +48,11 @@ Fonts: `font -- . "Inter Tight:wght@100..900"`.
 - **Cuts:** hard cuts on the beat. The one wipe allowed is the red block: full height, from `col(8)` to the right frame edge. It wipes in from the right (`clip-path: inset(0 0 0 100%)` to `inset(0)`) with `EASE.move` over `DUR.move` at the end of one scene, and the next scene starts under that same block and wipes it off to the right.
 - **Stillness:** once type is set, it stays put.
 
+## Signature moves
+1. **Index cut.** A hero numeral ("01", 320 px) rises through its mask in columns 0–2 (0–0.7 s). Its label slides one `MOD` in from the right (0.25–0.95 s) while a 2 px rule draws under both (0.1–0.7 s). Hold for 1.5 s, then hard cut.
+2. **Re-set the poster.** A settled headline block moves from columns 0–7 to 4–11 in whole `MOD`s (`EASE.move`, 0.8 s) while a second block rises through its mask in the space it left, 0.3 s behind. The layout reorganizes the way a compositor re-sets a page.
+3. **Red block hand-off.** The cut described under Motion: the block wipes in over the end of one scene, and the next scene starts under it and wipes it away.
+
 ## Devices
 - 2 px ink rules, index numerals and a visible order of reading.
 - At most one geometric gesture per film (a circle, an arc, or a bar at 15°/30°/45°), in `--accent`. It's optional.

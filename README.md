@@ -59,7 +59,7 @@ More on the pipeline in [PIPELINE.md](PIPELINE.md). The scene contract is in [fi
 - **Music ducks by itself** under every line.
 - **File → Duplicate** copies the project you have open (film, timeline and audio) into a new folder next to it, for a variant or a safe experiment.
 - **Templates** keep a film's look and cut but none of its audio. Use **Save as template** in the inspector, and pick one from **File → New project**.
-- **Styles** are art direction, not code: references, tokens and motion rules for Swiss, Keynote, Editorial, Kinetic, Data or Cutout. Pick one in **File → New project**, and agents follow it as the project's `style.md`.
+- **Styles** are art direction, not code: references, tokens, signature moves and don'ts for fifteen looks, from Swiss and Keynote to Riso, Terminal, Ma and Cinema. Pick one in **File → New project**, and agents follow it as the project's `style.md`. `styles/gallery` has a worked example of each.
 - **Preview is the export.** The same frames and the same audio mix, just smaller.
 - **Undo is deep.** Use ⌘Z. The last 40 saves are kept in `.history/`.
 - **Films are code.** A design runs in your browser, next to the studio, so only open designs you trust.
@@ -81,7 +81,7 @@ npm run vo -- <p> [--draft] [--all]   # voice the lines (--engine elevenlabs to 
 npm run music -- <p> "mood"
 npm run render -- <p> [--draft]       # → exports/*.mp4
 npm run bundle -- <p>                 # → one self-contained HTML file
-npm run font -- <p> "Inter Tight:wght@100..900"   # bundle Google Fonts into the film
+npm run font -- <p> "Inter Tight:wght@100..900"   # bundle Google Fonts into the film (--text auto for CJK)
 npm run template -- list | save <p> --name "…"
 ```
 

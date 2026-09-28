@@ -44,10 +44,15 @@ Fonts: `font -- . "Geist:wght@100..900" "Geist Mono:wght@400..500"`. If the bran
 - **Cursor:** when a cursor demonstrates the product, it moves on eased curves (never straight lines), dips to 0.97 scale on a click, and the UI answers within 0.1 s.
 - **Exits:** a fade of `DUR.out` with 4 px of blur, or a cut. Crossfades are fine in this style, with 2 px of blur through the dissolve.
 
+## Signature moves
+1. **Word by word.** A centered hero line blurs in one word at a time, 60 ms apart, while its wrapper drifts from 1.00 to 1.03 across the shot. After the hold, the line dims to `--muted` and moves up 120 px (`EASE.move`) as a product panel springs in below. Focus passes from the claim to the proof.
+2. **Push to detail.** A panel sits at 65% width. The wrapper scales to 1.8× onto one control over 1.2 s (`EASE.move`) while everything outside that control dims to 40%. Then a `.mono` label rises through its mask beside it.
+3. **Cursor demo.** The cursor travels a cubic path in 0.8 s and dips to 0.97 on the click. 0.1 s later the UI state crossfades over 0.15 s, and a toast springs in with `spring(s, 0.5, 0.1)`.
+
 ## Devices
-- One radial glow behind the hero in `--accent` at 15–20% opacity, blurred 160 px. Use it at most once per scene.
+- One soft glow behind the hero: a `radial-gradient(closest-side, <accent at 18%>, transparent)` on a 1400×1000 box. Use it at most once per scene. Don't use `filter: blur()` on a big shape: it renders 3–4× slower and looks the same.
 - A 64 px dot grid at 6% opacity, masked by a radial fade.
-- Grain at 3–4% (`feTurbulence`, seed `Math.floor(t * 24)`).
+- Grain at 3–4% (`feTurbulence`, seed `Math.floor(t * 12)`).
 
 ## Never
 Blue-to-purple gradient backgrounds, more than one glow, glassmorphism or `backdrop-filter`, drop shadows on panels (use the 1 px border), 3D tilts past 8°, particle fields, stock icons, or a headline sharing the frame with a busy UI.

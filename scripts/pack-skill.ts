@@ -3,7 +3,7 @@
 // ready to add as a skill in a Claude design session (claude.ai / Cowork).
 import { execFileSync } from "node:child_process";
 import { cpSync, mkdirSync, rmSync } from "node:fs";
-import { join } from "node:path";
+import { join, relative } from "node:path";
 import { ROOT } from "./_lib.ts";
 
 const out = join(ROOT, "dist", "film-design");
@@ -13,7 +13,11 @@ cpSync(join(ROOT, "skills", "film-design", "SKILL.md"), join(out, "SKILL.md"));
 cpSync(join(ROOT, "film-kit", "film-kit.js"), join(out, "references", "film-kit.js"));
 cpSync(join(ROOT, "film-kit", "README.md"), join(out, "references", "film-kit.md"));
 cpSync(join(ROOT, "templates", "project"), join(out, "references", "project-template"), { recursive: true });
-cpSync(join(ROOT, "styles"), join(out, "references", "styles"), { recursive: true });
+// presets and their example scenes; not the gallery's generated fonts and runtime, nor the preview images
+cpSync(join(ROOT, "styles"), join(out, "references", "styles"), {
+  recursive: true,
+  filter: (src) => { const r = relative(join(ROOT, "styles"), src); return r === "" || r.endsWith(".md") || ["gallery", join("gallery", "film"), join("gallery", "film", "scenes")].includes(r) || /^gallery\/film\/scenes\/[^/]+\.js$/.test(r); },
+});
 // the starter film (film.html + film/) from the film templates, minus template metadata
 for (const f of ["film.html", "film"]) cpSync(join(ROOT, "templates", "films", "starter", f), join(out, "references", "project-template", f), { recursive: true });
 cpSync(join(ROOT, "film-kit", "film-kit.js"), join(out, "references", "project-template", "film", "film-kit.js"));

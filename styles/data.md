@@ -49,6 +49,11 @@ Fonts: `font -- . "Libre Franklin:wght@100..900" "Source Serif 4:ital,opsz,wght@
 - **State changes** (sort, zoom, filter) are one scene with timed phases in which the same marks move. They are not cuts.
 - Nothing moves while the viewer reads a number. Hold it for at least 2 s.
 
+## Signature moves
+1. **Grey, then the one.** Twelve lines draw in `--dim` (`DUR.draw`). One then redraws over its grey self in `--hi`, with its end label and a count-up to its final value.
+2. **Big number.** A 200 px figure counts to the exact value (`EASE.in`, `DUR.count`). Its unit rises through a mask 0.2 s after, then the source line fades in. Hold for 2 s.
+3. **Sort.** Bars reorder by value. Each moves to its new slot over 0.8 s (`EASE.draw`), 40 ms apart, with its label travelling alongside it.
+
 ## Devices
 - 1 px gridlines in `--grid` and a 2 px baseline.
 - Direct labels, leader-line annotations, and a range band for context.

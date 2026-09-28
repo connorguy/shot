@@ -10,7 +10,7 @@ import { cancelJob, getJob, hasFfmpeg, startExport } from "./export.ts";
 import { elevenAvailable, listVoices } from "./elevenlabs.ts";
 import { authStatus, designVoice } from "./gemini.ts";
 import { makeMusic, makeTake, stretched } from "./media.ts";
-import { listStyles } from "./styles.ts";
+import { listStyles, stylePreview } from "./styles.ts";
 import { listTemplates, saveTemplate, templateDir } from "./templates.ts";
 import {
   duplicateProject, filmVersion, forgetProject, listAssets, listProjects, newProjectDefaults, openProjectFolder, projectDir, projectFile,
@@ -76,6 +76,13 @@ export function createApi(ctx: Ctx) {
   on("GET", /^\/api\/projects$/, async (_m, _q, res) => send(res, 200, await listProjects(ctx)));
 
   on("GET", /^\/api\/styles$/, async (_m, _q, res) => send(res, 200, await listStyles(ctx)));
+  on("GET", /^\/api\/styles\/([a-z0-9-]+)\/preview$/, async (m, _q, res) => {
+    const p = stylePreview(ctx, m[1]);
+    if (!existsSync(p)) return send(res, 404, { error: "no preview" });
+    res.setHeader("Content-Type", "image/jpeg");
+    res.setHeader("Cache-Control", "no-cache");
+    res.end(await readFile(p));
+  });
   on("GET", /^\/api\/templates$/, async (_m, _q, res) => send(res, 200, await listTemplates(ctx)));
 
   on("GET", /^\/api\/templates\/([^/]+)\/preview$/, async (m, _q, res) => {

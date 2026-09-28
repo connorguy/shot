@@ -24,6 +24,7 @@ export interface TemplateInfo {
   id: string; name: string; description: string; tags: string[]; scenes: number | null; duration: number | null;
   from: string | null; createdAt: string | null; hasPreview: boolean; width: number; height: number;
 }
+export interface StyleInfo { id: string; name: string; description: string }
 export interface ElevenVoice { id: string; name: string; category: string; description: string | null; labels: Record<string, string>; preview: string | null }
 export interface Asset { asset: string; kind: string; duration: number | null; size: number }
 export interface Job {
@@ -41,8 +42,9 @@ export const api = {
   status: () => req<Status>("GET", "/api/status"),
   projects: () => req<ProjectInfo[]>("GET", "/api/projects"),
   newDefaults: () => req<{ parent: string; studioProjects: string; home: string }>("GET", "/api/new-defaults"),
-  createProject: (body: { name: string; title?: string; parent?: string; from?: string | null; template?: string | null; video?: string | null; aspect?: Aspect | null }) => req<{ id: string; dir: string }>("POST", "/api/projects", body),
+  createProject: (body: { name: string; title?: string; parent?: string; from?: string | null; template?: string | null; video?: string | null; aspect?: Aspect | null; style?: string | null }) => req<{ id: string; dir: string }>("POST", "/api/projects", body),
   templates: () => req<TemplateInfo[]>("GET", "/api/templates"),
+  styles: () => req<StyleInfo[]>("GET", "/api/styles"),
   templatePreview: (id: string, v = 0) => `/api/templates/${encodeURIComponent(id)}/preview?v=${v}`,
   saveTemplate: (p: string, body: { name: string; description: string; at: number; includeCut: boolean; overwrite: boolean }) =>
     req<{ id: string; dir: string }>("POST", `${P(p)}/template`, body),

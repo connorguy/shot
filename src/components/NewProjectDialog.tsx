@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { ASPECTS, aspectOf, type Aspect } from "../../shared/timeline.ts";
-import { api, type TemplateInfo } from "../lib/api.ts";
+import { api, type StyleInfo, type TemplateInfo } from "../lib/api.ts";
 import { setState, toast, useStore } from "../lib/store.ts";
 
 /** "~/Movies/Launch_film-v2.mp4" → "Launch film v2" */
@@ -19,6 +19,8 @@ export function NewProjectDialog({ onCreated }: { onCreated: (id: string) => voi
   const [templates, setTemplates] = useState<TemplateInfo[]>([]);
   const [tpl, setTpl] = useState("starter");
   const [aspect, setAspect] = useState<Aspect>("landscape");
+  const [styles, setStyles] = useState<StyleInfo[]>([]);
+  const [style, setStyle] = useState("");
   const [design, setDesign] = useState("");
   const [video, setVideo] = useState("");
   const [busy, setBusy] = useState(false);
@@ -35,6 +37,7 @@ export function NewProjectDialog({ onCreated }: { onCreated: (id: string) => voi
         const t = ts.find((x) => x.id === tpl);
         if (t) setAspect(aspectOf(t.width, t.height));
       }).catch(() => setTemplates([]));
+      api.styles().then(setStyles).catch(() => setStyles([]));
       d.showModal();
     }
     if (!open && d.open) d.close();
@@ -58,9 +61,10 @@ export function NewProjectDialog({ onCreated }: { onCreated: (id: string) => voi
         name: slug(title), title: title.trim(), parent: parent.trim(),
         from: start === "design" ? design.trim() : null, template: start === "template" ? tpl : null,
         video: start === "video" ? video.trim() : null, aspect: start === "template" && aspect !== native ? aspect : null, // unchanged: keep the template's exact size
+        style: start !== "video" && style ? style : null,
       });
       setState({ newOpen: false });
-      setTitle(""); setDesign(""); setVideo(""); setStart("template");
+      setTitle(""); setDesign(""); setVideo(""); setStart("template"); setStyle("");
       onCreated(r.id);
       toast(start === "video"
         ? `Created ${r.dir}. Each shot is a placeholder: ask an agent in that folder to rebuild them (its AGENTS.md explains how).`
@@ -119,6 +123,17 @@ export function NewProjectDialog({ onCreated }: { onCreated: (id: string) => voi
           {aspect !== native && <p className="panel-note">This template was laid out for {ASPECTS[native].label.toLowerCase()}. Scenes that place things by <code>W</code> and <code>H</code> adapt; ask an agent to re-lay out the rest.</p>}
         </>
       )}
+      {start !== "video" && styles.length > 0 && (
+        <>
+          <label>Style
+            <select value={style} onChange={(e) => setStyle(e.target.value)}>
+              <option value="">None: follow the brief and the template</option>
+              {styles.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+            </select>
+          </label>
+          {style && <p className="panel-note">{styles.find((s) => s.id === style)?.description} Saved as <code>style.md</code>: art direction agents follow when they design or change scenes.</p>}
+        </>
+      )}
       {start === "video" && (
         <>
           <label>Video
@@ -142,7 +157,8 @@ export function NewProjectDialog({ onCreated }: { onCreated: (id: string) => voi
         <pre className="tree">{`${target}/
   AGENTS.md      how everything works (layout, scene rules, timeline.json, commands)
   CLAUDE.md      → AGENTS.md
-  brief.md       what the film says; fill in first
+  brief.md       what the film says; fill in first${start !== "video" && style ? `
+  style.md       the look: references, tokens, motion rules` : ""}
   film.html      loads the scenes in order
   film/          film-kit.js · lib.js · styles.css · scenes/*.js · edit.js${start === "video" ? `
   reference/     the video, its shots, contact sheets and frames` : ""}

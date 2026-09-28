@@ -1,16 +1,17 @@
-// npm run new -- <name> [--dir <parent folder>] [--title "Launch film"] [--template <id> [--aspect portrait] | --from film.html | design.zip | folder | --video clip.mp4]
+// npm run new -- <name> [--dir <parent folder>] [--title "Launch film"] [--template <id> [--aspect portrait] | --from film.html | design.zip | folder | --video clip.mp4] [--style <id>]
 // Creates <parent>/<name>/ from templates/project: AGENTS.md (how everything works), CLAUDE.md, brief.md,
 // .gitignore, and the starter film (or the design passed with --from), then registers it with the studio.
 // --aspect landscape | portrait | square sets a template start's stage (1920×1080, 1080×1920, 1080×1080).
 // --video clones a video: one placeholder scene per shot, reference frames and the soundtrack (--threshold 0.3
-// sets how big a picture change counts as a cut). Without --dir the project goes in shot/projects/.
+// sets how big a picture change counts as a cut). --style <id> copies styles/<id>.md in as style.md, the art
+// direction agents follow (not with --video). Without --dir the project goes in shot/projects/.
 import { resolve } from "node:path";
 import { expandHome, scaffoldProject } from "../server/projects.ts";
 import { ctx, die, done, parseArgs } from "./_lib.ts";
 import type { Aspect } from "../shared/timeline.ts";
 
 const args = parseArgs();
-const name = args._[0] || die('usage: npm run new -- <name> [--dir <parent>] [--title "Title"] [--template <id> [--aspect landscape|portrait|square]] [--from film.html|design.zip|folder] [--video clip.mp4 [--threshold 0.3]]\nTemplates: npm run template -- list');
+const name = args._[0] || die('usage: npm run new -- <name> [--dir <parent>] [--title "Title"] [--template <id> [--aspect landscape|portrait|square]] [--from film.html|design.zip|folder] [--video clip.mp4 [--threshold 0.3]] [--style <id>]\nTemplates: npm run template -- list. Styles: the files in styles/.');
 const here = process.env.INIT_CWD || process.cwd();
 const threshold = args.flags.threshold != null ? Number(args.flags.threshold) : undefined;
 if (threshold !== undefined && !(threshold > 0 && threshold < 1)) die("--threshold is a scene-change score between 0 and 1 (default 0.3).");
@@ -25,6 +26,7 @@ try {
     template: typeof args.flags.template === "string" ? args.flags.template : null,
     video: at(args.flags.video) || null,
     aspect: typeof args.flags.aspect === "string" ? (args.flags.aspect as Aspect) : null,
+    style: typeof args.flags.style === "string" ? args.flags.style : null,
     threshold,
     log: (s) => console.log(s),
   });
@@ -40,7 +42,7 @@ Next:
   npm run compare -- "${dir}" --sheet` : `Created ${dir}  (studio id: ${id})
 
   AGENTS.md    how the project works: layout, scene contract, timeline.json, commands
-  brief.md     fill this in first
+  brief.md     fill this in first${args.flags.style ? "\n  style.md     the look agents follow" : ""}
   film.html + film/scenes/*.js
 
 Next:

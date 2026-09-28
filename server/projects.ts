@@ -9,6 +9,7 @@ import { homedir, tmpdir } from "node:os";
 import { basename, dirname, extname, join, relative, resolve, sep } from "node:path";
 import { promisify } from "node:util";
 import { ASPECTS, normalizeTimeline, type Aspect, type Timeline } from "../shared/timeline.ts";
+import { readStyle } from "./styles.ts";
 import { applyTemplate, setStageSize } from "./templates.ts";
 import { importVideo, VIDEO_EXT } from "./video.ts";
 
@@ -209,6 +210,7 @@ export interface NewProject {
   template?: string | null; // templates/films/<id> to start from when there's no design (default "starter")
   aspect?: Aspect | null; // stage size for a template start (default: the template's own); designs and videos keep theirs
   video?: string | null; // clone a video: placeholder scenes per shot, reference frames and the soundtrack
+  style?: string | null; // styles/<id>.md, written as the project's style.md (art direction for agents); not with video
   threshold?: number; // video: scene-change score that counts as a cut (0..1, default 0.3)
   log?: (s: string) => void;
 }
@@ -216,7 +218,7 @@ export interface NewProject {
 /** Create a project folder with everything an agent or person needs, then register it.
  *  Always from templates/project: AGENTS.md (layout, contract, timeline, commands), CLAUDE.md, brief.md, .gitignore.
  *  Film: the design passed in `from`, placeholders cloned from `video`, or a film template (templates/films/<id>,
- *  default "starter"). Returns { id, dir }. */
+ *  default "starter"). A style preset, if given, becomes style.md. Returns { id, dir }. */
 export async function scaffoldProject(ctx: Ctx, p: NewProject) {
   const parent = resolve(expandHome(p.parent || ctx.projectsDir));
   const slug = slugify(p.name);
@@ -227,6 +229,8 @@ export async function scaffoldProject(ctx: Ctx, p: NewProject) {
   if (!existsSync(dirname(parent))) throw new Error(`${dirname(parent)} does not exist.`);
 
   if (p.aspect && !(p.aspect in ASPECTS)) throw new Error(`Aspect is one of ${Object.keys(ASPECTS).join(", ")}.`);
+  if (p.style && p.video) throw new Error("A cloned video takes its look from the reference, so it can't also take a style.");
+  const style = p.style ? await readStyle(ctx, p.style) : null;
   // resolve the design source first so a bad source leaves nothing behind
   let html: string | null = null, designDir: string | null = null, video: string | null = null;
   if (p.video) {
@@ -272,6 +276,7 @@ export async function scaffoldProject(ctx: Ctx, p: NewProject) {
   }
   if (designDir) await copyTree(designDir, dir, (s) => s, (r) => ["AGENTS.md", "CLAUDE.md", "timeline.json"].includes(r) || r.startsWith("exports") || r.startsWith(".history"));
   if (html != null) await writeFile(join(dir, "film.html"), html);
+  if (style) await writeFile(join(dir, "style.md"), style);
 
   const filmHtml = await readFile(join(dir, "film.html"), "utf8");
   if (/src=["']film\/film-kit\.js["']/.test(filmHtml)) { // always the studio's current runtime (it stays backward compatible)

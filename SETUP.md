@@ -64,7 +64,7 @@ Ask whether they want to start a film now. If they do, pick a name and a parent 
 npm run new -- <name> --dir <parent>
 ```
 
-That creates `<parent>/<name>/` with `brief.md`, `AGENTS.md`, `CLAUDE.md` and a starter film, and adds it to the studio. Fill in `brief.md` with them. For all further work, follow that folder's `AGENTS.md`.
+That creates `<parent>/<name>/` with `brief.md`, `AGENTS.md`, `CLAUDE.md` and a starter film, and adds it to the studio. Fill in `brief.md` with them. If they know the look they want, add `--style <id>` (the presets are in `styles/`; `README.md` there lists them) and the project gets a `style.md` for agents to follow. For all further work, follow that folder's `AGENTS.md`.
 
 If they want to recreate a video they already have, add `--video <file>`. The project then starts with one placeholder scene per shot, and its `AGENTS.md` explains how to rebuild them.
 

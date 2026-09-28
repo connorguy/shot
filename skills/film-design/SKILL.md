@@ -11,12 +11,14 @@ You design the **picture** as HTML/CSS/JS, with each scene a pure function of ti
 
 - A brief: goal, audience, length, beats, facts, brand. If there isn't one, write `brief.md` from `references/project-template/brief.md` with the user first.
 - Brand assets: fonts, logos, product images. Put them in `film/assets/` and reference them by relative path (`film/assets/logo.svg`).
+- A look: a style preset from `references/styles/`, the user's references, or the brand. See "Look and craft".
 
 ## Output: a project folder, zipped
 
 ```
 <name>/
   brief.md
+  style.md               the preset you followed (copied from references/styles/), with any brand overrides
   film.html              shell: film-kit, lib, one <script> per scene, edit.js last
   film/
     film-kit.js          copy of references/film-kit.js, unmodified
@@ -50,12 +52,31 @@ If the environment can only produce one file (for example a chat artifact), inli
 - `notes`: intent or open questions for whoever edits next.
 - `edit.js`: a default cut that plays the scenes at the intended pace (`{ scene, in?, out?, duration? | speed?, xfade? }`). It seeds the studio timeline and nothing more.
 
-## Craft
+## Look and craft
 
-- One idea per scene, in 1.5–5 s of scene time. Leave room for VO: roughly 2.5 words per second.
-- Use one easing family throughout (`EB`, `E.out3`, `E.outBack` in lib), and enter and exit with the same motion vocabulary.
-- Mark which numbers on screen are illustrative in `brief.md`.
-- Check your work by rendering stills at several `t` values per scene (headless browser, `?render` on `film.html`, `window.__film.renderFrame([{scene, t, opacity: 1}])`), and look at them.
+1. **Pick the look before any scene.** If the brief or the user names a style, use it. Otherwise pick the preset in `references/styles/` that fits the brief (`README.md` there lists them), tell the user which one and why, and save it as `style.md`. The brand's colors, type and logo override a preset's; its layout and motion rules still hold.
+2. **Set it up once.**
+   - Put color and type tokens on `:root` in `styles.css`.
+   - Put `EASE`, `DUR` and the grid in `lib.js`.
+   - Bundle fonts as woff2 in `film/assets/fonts/`, with `@font-face` rules in `styles.css`. If you can't download them, keep the family names with a system fallback, and put the preset's `font` command in the first scene's `notes`, so an agent can run it after import.
+
+   Scenes use these tokens and never invent their own.
+3. **Follow "Design quality"** in `references/project-template/AGENTS.md`:
+   - one focal point at a time
+   - asymmetric easing, and `spring()` in place of `E.outBack`
+   - intentional stagger
+   - varied entrances: `mask()`, wipes and drawn strokes, not a fade-up on everything
+   - readable holds of max(1 s, characters ÷ 15)
+   - varied scene lengths
+   - match cuts over crossfades
+   - restraint, and its Avoid list
+4. **Keep each scene to one idea**, in 1.5–5 s of scene time. Leave room for VO at roughly 2.5 words per second.
+5. **Mark illustrative numbers** in `brief.md`, and say "Illustrative" on screen where the style has a source line.
+6. **Review your own frames.**
+   - Render stills of every scene at its start, mid-entrance and end (headless browser, `?render` on `film.html`, `window.__film.renderFrame([{scene, t, opacity: 1}])`).
+   - Make a contact sheet of mid-scene frames.
+   - Look at them against `style.md` and fix what breaks it.
+   - Then remove one element that isn't earning its place.
 
 ## Handoff
 

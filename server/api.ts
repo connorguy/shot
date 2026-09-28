@@ -10,6 +10,7 @@ import { cancelJob, getJob, hasFfmpeg, startExport } from "./export.ts";
 import { elevenAvailable, listVoices } from "./elevenlabs.ts";
 import { authStatus, designVoice } from "./gemini.ts";
 import { makeMusic, makeTake, stretched } from "./media.ts";
+import { listStyles } from "./styles.ts";
 import { listTemplates, saveTemplate, templateDir } from "./templates.ts";
 import {
   duplicateProject, filmVersion, forgetProject, listAssets, listProjects, newProjectDefaults, openProjectFolder, projectDir, projectFile,
@@ -74,6 +75,7 @@ export function createApi(ctx: Ctx) {
 
   on("GET", /^\/api\/projects$/, async (_m, _q, res) => send(res, 200, await listProjects(ctx)));
 
+  on("GET", /^\/api\/styles$/, async (_m, _q, res) => send(res, 200, await listStyles(ctx)));
   on("GET", /^\/api\/templates$/, async (_m, _q, res) => send(res, 200, await listTemplates(ctx)));
 
   on("GET", /^\/api\/templates\/([^/]+)\/preview$/, async (m, _q, res) => {
@@ -92,12 +94,12 @@ export function createApi(ctx: Ctx) {
 
   on("GET", /^\/api\/new-defaults$/, async (_m, _q, res) => send(res, 200, newProjectDefaults(ctx)));
 
-  // new project: POST /api/projects { name, title?, parent?, from? | video? | template? [aspect?] } -> { id, dir }
+  // new project: POST /api/projects { name, title?, parent?, from? | video? | template? [aspect?], style? } -> { id, dir }
   on("POST", /^\/api\/projects$/, async (_m, req, res) => {
     const b = await readJson(req);
     if (!String(b.name || "").trim()) return send(res, 400, { error: "Give the project a name." });
     send(res, 200, await scaffoldProject(ctx, {
-      name: b.name, title: b.title, parent: b.parent || undefined, from: b.from || null, template: b.template || null, video: b.video || null, aspect: b.aspect || null,
+      name: b.name, title: b.title, parent: b.parent || undefined, from: b.from || null, template: b.template || null, video: b.video || null, aspect: b.aspect || null, style: b.style || null,
       log: (s) => console.log(`[studio] ${b.name}: ${s}`),
     }));
   });

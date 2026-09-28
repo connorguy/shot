@@ -25,8 +25,8 @@ Who watches, where (site hero, LinkedIn, sales deck, event screen), sound on or 
 ## Facts and figures
 Numbers that must be exact, and which ones are illustrative.
 
-## Brand
-Colors, type, logo usage, words to use and avoid. Link the brand system if there is one.
+## Brand and look
+Colors, type, logo usage, words to use and avoid. Link the brand system if there is one. Name two or three films, posters or sites whose look you want, and say what to take from each. If the project has a `style.md`, that file is the art direction and this section adds the brand.
 
 ## Voice and music
 Voice character (for Gemini voice design), pace, music mood and where it should build or hit.

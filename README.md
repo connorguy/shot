@@ -59,6 +59,7 @@ More on the pipeline in [PIPELINE.md](PIPELINE.md). The scene contract is in [fi
 - **Music ducks by itself** under every line.
 - **File → Duplicate** copies the project you have open (film, timeline and audio) into a new folder next to it, for a variant or a safe experiment.
 - **Templates** keep a film's look and cut but none of its audio. Use **Save as template** in the inspector, and pick one from **File → New project**.
+- **Styles** are art direction, not code: references, tokens and motion rules for Swiss, Keynote, Editorial, Kinetic, Data or Cutout. Pick one in **File → New project**, and agents follow it as the project's `style.md`.
 - **Preview is the export.** The same frames and the same audio mix, just smaller.
 - **Undo is deep.** Use ⌘Z. The last 40 saves are kept in `.history/`.
 - **Films are code.** A design runs in your browser, next to the studio, so only open designs you trust.
@@ -70,7 +71,7 @@ Keys: `T` trim · `S` split · `H` hold · `P` prompt · `[` `]` hide side panel
 Anything the studio does, the CLI does too. `<p>` is a project folder.
 
 ```sh
-npm run new -- <name> [--dir <parent>] [--template <id>] [--aspect portrait|square] [--from design.zip] [--video clip.mp4]
+npm run new -- <name> [--dir <parent>] [--template <id>] [--aspect portrait|square] [--style swiss] [--from design.zip] [--video clip.mp4]
 npm run open -- <folder>              # open a project that lives anywhere
 npm run duplicate -- <p> ["Title"]    # copy a project next to it
 npm run inspect -- <p>                # cut, scenes, audio, warnings
@@ -80,6 +81,7 @@ npm run vo -- <p> [--draft] [--all]   # voice the lines (--engine elevenlabs to 
 npm run music -- <p> "mood"
 npm run render -- <p> [--draft]       # → exports/*.mp4
 npm run bundle -- <p>                 # → one self-contained HTML file
+npm run font -- <p> "Inter Tight:wght@100..900"   # bundle Google Fonts into the film
 npm run template -- list | save <p> --name "…"
 ```
 
@@ -92,6 +94,7 @@ npm run template -- list | save <p> --name "…"
 | `shared/` | timeline model, shared by the UI, the server and the CLI |
 | `film-kit/` | the runtime every film loads |
 | `templates/` | what new projects start from |
+| `styles/` | style presets: art direction a project can follow (`style.md`) |
 | `skills/film-design/` | the skill for Claude design sessions |
 | `scripts/` | CLI |
 

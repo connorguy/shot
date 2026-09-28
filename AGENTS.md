@@ -10,7 +10,7 @@ Two kinds of work happen here. Find out which one you're doing first.
 - `npm run dev`: studio at http://localhost:5178 (Vite and the API in one process).
 - `npm run typecheck`: `tsc --noEmit` over `src/`, `server/`, `shared/` and `scripts/`. Run it before handing off.
 - `npm run build`: typecheck plus a production bundle of the UI.
-- CLI for films: `new`, `open`, `duplicate`, `inspect`, `frame`, `compare`, `vo`, `music`, `render`, `bundle`, `pack-skill` (see README).
+- CLI for films: `new`, `open`, `duplicate`, `inspect`, `frame`, `compare`, `vo`, `music`, `render`, `bundle`, `font`, `pack-skill` (see README).
 
 ## Code map
 
@@ -25,6 +25,8 @@ Two kinds of work happen here. Find out which one you're doing first.
 | Gemini: API key or ADC (Developer API, then Agent Platform fallback); TTS, voice design, Lyria | `server/gemini.ts`, `server/media.ts` |
 | ElevenLabs (optional, `ELEVENLABS_API_KEY`): TTS with speed-based pacing, voice list | `server/elevenlabs.ts`, `server/media.ts` |
 | Film templates: list, save (strips audio), cover render, apply to a new project | `server/templates.ts`, `templates/films/` |
+| Style presets: art direction (references, tokens, layout, type, motion, don'ts) that becomes a project's `style.md`. Universal craft rules live in the "Design quality" section of `templates/project/AGENTS.md`; presets only add to them or change their numbers | `styles/`, `server/styles.ts` |
+| Bundle Google Fonts into a film (woff2 plus `@font-face` in `film/styles.css`) | `scripts/font.ts` |
 | Clone a video: cut detection, reference frames and contact sheets, soundtrack, placeholder scenes (`film/reference.js`) and the imported cut; `compare` renders a shot next to the reference | `server/video.ts`, `scripts/compare.ts` |
 | Duplicate a project (keeps film, timeline, audio, reference; drops exports and history) | `duplicateProject` in `server/projects.ts` |
 | Headless Chrome (thumbnails, frames), MP4 export jobs | `server/chrome.ts`, `server/export.ts` |
@@ -46,4 +48,5 @@ Two kinds of work happen here. Find out which one you're doing first.
 - CLI scripts accept a project id or a folder path, resolved against `INIT_CWD` so `npm --prefix <studio> run x -- .` works from inside a project.
 - Node runs the CLI with type stripping only: no enums, namespaces or parameter properties (`erasableSyntaxOnly` enforces this).
 - Templates never carry audio, takes or designed voice ids (`templateTimeline()` in `shared/timeline.ts`). Projects made from one get `seedVo` so draft VO slots come back from the scenes.
+- The starter `lib.js` helpers (`spring`, `mask`, `P`, `E`…) are named in the project `AGENTS.md`, `skills/film-design` and the style presets. Rename one and you update all of them.
 - `film-kit.js` is copied into every project. Keep changes backward compatible and update `templates/project` and `skills/film-design` along with it.

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // shot: command-line entry point (npm link, or what the Homebrew formula installs).
 //   shot                 start the studio and open it in your browser  (--no-open to skip, --port 5178)
-//   shot <command> ...   new · open · duplicate · inspect · frame · compare · vo · music · render · bundle · template · pack-skill
+//   shot <command> ...   new · open · duplicate · inspect · frame · compare · vo · music · render · bundle · font · template · pack-skill
 // Paths you pass are resolved from where you run shot, so `shot inspect .` works inside a project.
 import { spawn } from "node:child_process";
 import { realpathSync } from "node:fs";
@@ -12,7 +12,7 @@ import { fileURLToPath } from "node:url";
 const ROOT = join(dirname(realpathSync(fileURLToPath(import.meta.url))), "..");
 const COMMANDS = {
   new: "new-project", open: "open", duplicate: "duplicate", inspect: "inspect", frame: "frame", compare: "compare", vo: "vo", music: "music",
-  render: "render", bundle: "bundle", template: "template", "pack-skill": "pack-skill",
+  render: "render", bundle: "bundle", font: "font", template: "template", "pack-skill": "pack-skill",
 };
 const [major, minor] = process.versions.node.split(".").map(Number);
 if (major < 22 || (major === 22 && minor < 18)) {

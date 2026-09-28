@@ -31,6 +31,7 @@
     "music": "node scripts/music.ts",
     "render": "node scripts/render.ts",
     "bundle": "node scripts/bundle.ts",
+    "font": "node scripts/font.ts",
     "pack-skill": "node scripts/pack-skill.ts"
   },
   "dependencies": {

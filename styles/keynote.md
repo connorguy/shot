@@ -20,7 +20,7 @@ Restraint that reads as expensive. Each shot holds one sentence or one piece of 
 ```
 ```js
 const EASE = { in: bez(0.23, 1, 0.32, 1), out: bez(0.55, 0, 1, 0.45), move: bez(0.77, 0, 0.175, 1) };
-const DUR = { in: 0.8, out: 0.35, move: 0.9 };
+const DUR = { in: 0.8, out: 0.5, move: 0.9 };
 const STAGGER = { char: 0.022, word: 0.06, item: 0.08 };
 const drift = (t, a, b) => 1 + 0.03 * P(t, a, b);   // camera push over the whole shot: the only linear move
 ```
@@ -42,7 +42,7 @@ Fonts: `font -- . "Geist:wght@100..900" "Geist Mono:wght@400..500"`. If the bran
 - **Panels:** land with `spring(s, 0.6, 0.1)` from scale 0.96 and opacity 0. Never grow from scale 0.
 - **Camera drift:** each shot drifts with `drift()` across its whole length, applied to a wrapper, so no frame is dead still.
 - **Cursor:** when a cursor demonstrates the product, it moves on eased curves (never straight lines), dips to 0.97 scale on a click, and the UI answers within 0.1 s.
-- **Exits:** a 0.3 s fade with 4 px of blur, or a cut. Crossfades are fine in this style, with 2 px of blur through the dissolve.
+- **Exits:** a fade of `DUR.out` with 4 px of blur, or a cut. Crossfades are fine in this style, with 2 px of blur through the dissolve.
 
 ## Devices
 - One radial glow behind the hero in `--accent` at 15–20% opacity, blurred 160 px. Use it at most once per scene.

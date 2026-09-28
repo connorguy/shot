@@ -37,7 +37,7 @@ Fonts: `font -- . "Libre Franklin:wght@100..900" "Source Serif 4:ital,opsz,wght@
 - **Headline:** Libre Franklin 700.
 - **Labels and axes:** 500.
 - **Deck:** Source Serif 4 (`.deck`).
-- Every number uses tabular figures (the stage sets them), so digits don't jitter while counting.
+- Numbers use tabular figures (the stage sets them), so digits don't jitter while counting and columns line up. A single static number at 160 px or more reads better with `font-variant-numeric: proportional-nums`.
 
 ## Motion
 - **Axes first:** gridlines and axes draw over `DUR.axes`, then the data comes in.

@@ -48,7 +48,7 @@ function setv(e, x, y, s = 1, op = 1, blur = 0, rot = 0) {
  *  [box, reveal]: place `box` with setv, then call reveal(k) every draw, k 0 (hidden below) to 1 (in place). */
 function mask(parent, cls, css, html) {
   const box = mk(parent, 'abs', { overflow: 'hidden' });
-  const line = mk(box, cls, Object.assign({ position: 'relative', paddingBottom: '0.15em' }, css), html); // room for descenders
+  const line = mk(box, cls, Object.assign({ position: 'relative', padding: '0 0.1em 0.15em 0' }, css), html); // room for descenders and tight tracking
   return [box, k => { line.style.transform = `translateY(${((1 - k) * 105).toFixed(2)}%)`; }];
 }
 const meas = mk(document.body, null, { position: 'absolute', left: '-99999px', top: '0', visibility: 'hidden' });

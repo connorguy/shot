@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import {
   RATE_MAX, RATE_MIN, audioStart, clipStarts, rateOf, resolveAudio, setRate, sourceAt, speedOf, stretchedLength, totalDuration,
   type AudioClip, type AudioTrack, type Timeline as TL, type VideoClip,
@@ -9,7 +10,7 @@ import {
 import { api, fileUrl } from "../lib/api.ts";
 import { drag, snapTo } from "../lib/drag.ts";
 import { playhead, usePlayhead } from "../lib/playhead.ts";
-import { beginGesture, cancelGesture, edit, endGesture, getState, setState, toast, useStore } from "../lib/store.ts";
+import { beginGesture, cancelGesture, edit, endGesture, getState, setState, toast, useStore, type Sel } from "../lib/store.ts";
 import * as transport from "../lib/transport.ts";
 import { Waveform } from "./Waveform.tsx";
 
@@ -24,6 +25,7 @@ export function Timeline() {
   const scroller = useRef<HTMLDivElement>(null);
   const [viewW, setViewW] = useState(800);
   const [snapLine, setSnapLine] = useState<number | null>(null);
+  const [menu, setMenu] = useState<ClipMenuAt | null>(null);
 
   useLayoutEffect(() => {
     const el = scroller.current;
@@ -69,7 +71,7 @@ export function Timeline() {
     const el = scroller.current!;
     return (clientX - el.getBoundingClientRect().left + el.scrollLeft) / pps;
   };
-  const env: Env = { tl, pps, x2t, setSnapLine };
+  const env: Env = { tl, pps, x2t, setSnapLine, openMenu: setMenu };
 
   return (
     <div className="timeline">
@@ -91,11 +93,59 @@ export function Timeline() {
           </div>
         </div>
       </div>
+      {menu && <ClipMenu at={menu} onClose={() => setMenu(null)} />}
     </div>
   );
 }
 
-interface Env { tl: TL; pps: number; x2t: (x: number) => number; setSnapLine: (t: number | null) => void }
+interface Env {
+  tl: TL; pps: number; x2t: (x: number) => number; setSnapLine: (t: number | null) => void;
+  openMenu: (m: ClipMenuAt) => void;
+}
+
+interface ClipMenuAt { x: number; y: number; id: string }
+
+/** Right-click menu on a clip: copy its id, e.g. to point an agent at it in timeline.json. */
+function ClipMenu({ at, onClose }: { at: ClipMenuAt; onClose: () => void }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [pos, setPos] = useState({ left: at.x, top: at.y });
+  useLayoutEffect(() => {
+    const r = ref.current!.getBoundingClientRect();
+    setPos({ left: Math.min(at.x, window.innerWidth - r.width - 4), top: Math.min(at.y, window.innerHeight - r.height - 4) });
+    ref.current!.querySelector("button")?.focus();
+  }, [at]);
+  useEffect(() => {
+    const onDown = (e: PointerEvent) => { if (!ref.current?.contains(e.target as Node)) onClose(); };
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("pointerdown", onDown, true);
+    window.addEventListener("keydown", onKey);
+    window.addEventListener("blur", onClose);
+    window.addEventListener("wheel", onClose, { passive: true });
+    return () => {
+      window.removeEventListener("pointerdown", onDown, true);
+      window.removeEventListener("keydown", onKey);
+      window.removeEventListener("blur", onClose);
+      window.removeEventListener("wheel", onClose);
+    };
+  }, [onClose]);
+  const copy = () => {
+    onClose();
+    navigator.clipboard.writeText(at.id).then(() => toast(`Copied ${at.id}`), () => prompt("Clip ID:", at.id));
+  };
+  return createPortal(
+    <div ref={ref} className="menu-list ctx-menu" role="menu" style={pos} onContextMenu={(e) => e.preventDefault()}>
+      <button role="menuitem" onClick={copy}><span>Copy clip ID</span><small>{at.id}</small></button>
+    </div>,
+    document.body,
+  );
+}
+
+function onClipMenu(e: React.MouseEvent, env: Env, id: string, sel: Sel) {
+  e.preventDefault();
+  e.stopPropagation();
+  setState({ sel });
+  env.openMenu({ x: e.clientX, y: e.clientY, id });
+}
 
 /** Overlapping clips on a track stack into lanes; the row grows so each lane stays readable. */
 function laneLayout(tl: TL, track: AudioTrack) {
@@ -310,6 +360,7 @@ function VideoRow({ env }: { env: Env }) {
             missing={!!missing}
             style={dragging ? { transform: `translateX(${reorder!.dx}px)`, zIndex: 20, opacity: 0.85 } : undefined}
             onDown={(e) => onClipDown(e, c)}
+            onMenu={(e) => onClipMenu(e, env, c.id, { kind: "clip", ids: selIds.includes(c.id) ? selIds : [c.id] })}
             onEdge={(e, side) => onEdgeDown(e, c, side)}
           />
         );
@@ -322,7 +373,7 @@ function VideoRow({ env }: { env: Env }) {
 
 function VideoClipView(props: {
   clip: VideoClip; left: number; width: number; selected: boolean; missing: boolean; style?: React.CSSProperties;
-  onDown: (e: React.PointerEvent) => void; onEdge: (e: React.PointerEvent, side: "l" | "r") => void;
+  onDown: (e: React.PointerEvent) => void; onMenu: (e: React.MouseEvent) => void; onEdge: (e: React.PointerEvent, side: "l" | "r") => void;
 }) {
   const { clip: c, left, width, selected, missing } = props;
   const project = useStore((s) => s.project)!;
@@ -346,6 +397,7 @@ function VideoClipView(props: {
       className={`vclip ${selected ? "sel" : ""} ${missing ? "missing" : ""} ${sp === 0 ? "hold" : ""}`}
       style={{ left, width, ...props.style }}
       onPointerDown={props.onDown}
+      onContextMenu={props.onMenu}
       title={`${scene?.label || c.scene} · ${c.duration.toFixed(2)}s · source ${c.in.toFixed(2)}–${c.out.toFixed(2)}`}
     >
       <div className="strip">{thumbs}</div>
@@ -487,6 +539,7 @@ function AudioRow({ env, track }: { env: Env; track: AudioTrack }) {
             className={`aclip ${isSel ? "sel" : ""} ${r.placeholder ? "placeholder" : ""} ${busy[c.id] ? "busy" : ""} ${r.end > total + 0.01 ? "overrun" : ""} ${overlap.has(c.id) && track.kind === "vo" ? "overlap" : ""}`}
             style={{ left, width, top: 4 + lane.get(c.id)! * laneH, height: laneH - (lanes > 1 ? 1 : 0), bottom: "auto" }}
             onPointerDown={(e) => onDown(e, c, "move")}
+            onContextMenu={(e) => onClipMenu(e, env, c.id, { kind: "audio", id: c.id })}
             onDoubleClick={(e) => { e.stopPropagation(); setState({ sel: { kind: "audio", id: c.id }, panel: c.vo ? "script" : getState().panel }); }}
             title={`${text}\n${r.start.toFixed(2)}s → ${r.end.toFixed(2)}s${rateOf(c) !== 1 ? ` · ${Math.round(rateOf(c) * 100)}% speed` : ""}${c.anchor ? " · follows picture" : ""}${overlap.has(c.id) ? "\nOverlaps another clip on this track" : ""}\n${track.kind === "vo" ? "Drag an edge: Retime tool changes speed, Trim tool cuts (⇧ swaps)" : "Drag an edge to trim (⇧-drag changes speed)"}`}
           >

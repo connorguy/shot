@@ -104,7 +104,7 @@ Avoid these unless `style.md` asks for them:
 **Review pass** (look at every image before handing off):
 1. `frame -- . --sheet`. Does each scene read at thumbnail size with one focal point? Do palette and type stay consistent from scene to scene?
 2. For each changed scene, `frame -- . --scene <id> --at <t>` at its start, mid-entrance and end. Nothing should pop on at the first frame or sit half-in at the last, and masks shouldn't clip ascenders or descenders.
-3. `render -- . --draft` and watch it, or ask the user to. Is every scene moving at the same speed? Is any text gone before you can read it? If you can't watch video, render stills every 0.25 s through each entrance and exit instead.
+3. Check motion: render stills every 0.25 s through each entrance and exit, or ask the user to watch it in the studio. Is every scene moving at the same speed? Is any text gone before you can read it? Don't export an MP4 for this unless the user asks (see Commands).
 4. Name one element to remove. Taking something away usually helps more than adding.
 
 ## timeline.json
@@ -136,6 +136,7 @@ Avoid these unless `style.md` asks for them:
 }
 ```
 
+- Clip ids: the user can right-click a clip in the studio timeline and copy its id (`c_…` for picture, the audio clip's `id` otherwise), so a pasted id means that clip in `timeline.json`.
 - Retime a beat: change a clip's `duration`. Trim it: change `in`/`out` (keep `duration` in step to keep speed). Reorder: reorder `clips`. Keep `id`s stable, since audio anchors point at them.
 - Rewrite a VO line: edit `vo.text`, then generate a take (below). A take whose text differs from the line is shown as stale.
 - Voice engine: `voice.provider` is `gemini`, `elevenlabs` or `say` (free draft). `model`/`voice` are Gemini's; `voice.eleven` holds the ElevenLabs model (`eleven_v3`, `eleven_multilingual_v2`, `eleven_flash_v2_5`) and voice id (20 letters and digits). A line's own `vo.voice` only counts when it belongs to the engine in use. On Eleven v3 the style becomes a leading audio tag (`[calm]`), and tags like `[whispers]` work inline in `vo.text`.
@@ -147,6 +148,8 @@ Avoid these unless `style.md` asks for them:
 
 Each is `npm --prefix "{{STUDIO}}" run <command> -- . [options]` from this folder.
 
+**Don't export unless the user asks.** No `render` (draft or full) and no export from the studio on your own initiative: it's slow and fills `exports/`. Check your work with `frame` stills and `inspect`, and tell the user when the cut is ready for them to export or preview.
+
 | Command | What it does |
 |---|---|
 | `dev` | The studio UI at http://localhost:5178 (live preview, drag editing, VO, music, export). This project is in its project menu. No `-- .` needed. |
@@ -154,7 +157,7 @@ Each is `npm --prefix "{{STUDIO}}" run <command> -- . [options]` from this folde
 | `frame -- . 12.5` | PNG of timeline time 12.5 s, saved in `.frames/`. `--scene chart --at 17.2` renders one scene at its own time. `--sheet` renders a contact sheet, one frame per clip. Prints the file path, so look at it. |
 | `vo -- .` | Generate takes for VO lines without audio, with the project's engine (Gemini or ElevenLabs; `--engine` overrides, `--draft` uses free macOS `say`). `--all` regenerates every line; `--line vo_a1` one line. |
 | `music -- . "prompt"` | Lyria track timed to the current cut's sections, placed on the Music track. `--dry` prints the prompt only. |
-| `render -- .` | Full MP4 with the audio mix into `exports/`. `--draft` for 540p. |
+| `render -- .` | Full MP4 with the audio mix into `exports/`. `--draft` for 540p. Only when the user asks for one. |
 | `font -- . "Family:axes" …` | Downloads Google Fonts (css2 syntax, e.g. `"Inter Tight:wght@100..900"`) into `film/assets/fonts/` and writes their `@font-face` rules into `film/styles.css`. Films can't load fonts from the network at render time. Only the Latin subset is bundled unless you pass `--text auto`, which bundles exactly the characters the film uses, in any script (Japanese, symbols like → ❯). Run it again after the copy changes. |
 | `bundle -- .` | One self-contained HTML of the current cut (scripts, styles, fonts, images inlined) for sharing or a design chat. |
 | `compare -- . 12.5` | Projects cloned from a video only: the frame next to the reference video at the same moment, with a similarity score (SSIM). `--shot shot-03` across one shot, `--sheet` every shot. |
@@ -168,4 +171,4 @@ To reuse this film's look in new projects, save it as a template: **Save as temp
 1. `inspect -- .` to see the cut and any warnings.
 2. Edit a scene file or `timeline.json`.
 3. `frame -- . <t>` (or `--sheet`) and look at the PNG to check the change against the brief, `style.md` and "Design quality".
-4. Repeat. Render a `--draft` MP4 when timing matters, since stills do not show motion.
+4. Repeat. When timing matters, step through with stills or ask the user to watch it in the studio. Render an MP4 only if the user asks.

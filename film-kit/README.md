@@ -30,7 +30,7 @@ film.start();                                     // last
 - **Stage and player.** A native-size stage scaled to fit the window, with play, restart and scrub that play the default cut.
 - **`?render`.** A bare, unscaled frame with no controls, used for thumbnails, frame stills and MP4 export.
 - **`window.__film`.** Used by the studio and the CLI:
-  - `manifest()` returns `{ width, height, fps, scenes: [{ id, label, section, start, end, beats, vo, notes, error }], edit }`.
+  - `manifest()` returns `{ width, height, fps, scenes: [{ id, label, section, start, end, beats, vo, sfx, notes, error }], edit }`. `sfx` is the scene's sound-effect cues, `[{ t, prompt, duration?, gain?, influence? }]` on the scene clock.
   - `renderFrame([{ scene, t, opacity }])` draws those scene layers. Crossfades pass two layers.
   - `renderAt(videoTime)` plays back the default cut.
 - **Error isolation.** If a scene's build or draw throws, film-kit shows the error on that scene and reports it in `manifest().scenes[i].error`.

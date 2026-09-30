@@ -35,7 +35,7 @@ Drafts are free: they use the macOS `say` voice. Real voiceover and Lyria music 
 
 - **Gemini API key.** Run `cp .env.example .env`. Then tell the user to paste their key after `GEMINI_API_KEY=` in `$SHOT/.env`. Don't ask for the key in chat, and don't read it back.
 - **Google ADC**, for orgs that don't allow keys. If `gcloud` is installed, have the user run `gcloud auth application-default login` themselves (it opens a browser).
-- **ElevenLabs**, as an extra voice engine. It uses the same `.env`: they add `ELEVENLABS_API_KEY=`.
+- **ElevenLabs**, as an extra voice engine, for sound effects, and as a second music engine. It uses the same `.env`: they add `ELEVENLABS_API_KEY=`.
 - **Skip it for now.** Everything else works.
 
 ## 5. Agent integration

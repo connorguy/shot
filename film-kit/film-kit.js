@@ -124,7 +124,7 @@
       wrap.appendChild(el); stage.appendChild(wrap);
       var s = {
         id: meta.id, label: meta.label || meta.id, section: meta.section || null,
-        start: meta.start, end: meta.end, beats: meta.beats || [], notes: meta.notes || '', vo: meta.vo || '',
+        start: meta.start, end: meta.end, beats: meta.beats || [], notes: meta.notes || '', vo: meta.vo || '', sfx: meta.sfx || [],
         wrap: wrap, el: el, builder: builder, draw: null, error: null,
       };
       scenes.push(s); byId[s.id] = s;
@@ -154,7 +154,7 @@
       return {
         version: 1, title: opts.title || document.title, width: W, height: H, fps: FPS, background: BG,
         scenes: scenes.map(function (s) {
-          return { id: s.id, label: s.label, section: s.section, start: s.start, end: s.end, beats: s.beats, notes: s.notes, vo: s.vo, error: s.error };
+          return { id: s.id, label: s.label, section: s.section, start: s.start, end: s.end, beats: s.beats, notes: s.notes, vo: s.vo, sfx: s.sfx, error: s.error };
         }),
         edit: edit,
       };

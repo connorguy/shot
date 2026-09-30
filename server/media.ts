@@ -1,11 +1,12 @@
-// Generate project media (VO takes, Lyria tracks). Shared by the HTTP API and the CLI scripts.
+// Generate project media (VO takes, Lyria or ElevenLabs tracks, ElevenLabs sound effects). Shared by the HTTP API
+// and the CLI scripts.
 import { execFile } from "node:child_process";
 import { existsSync } from "node:fs";
 import { mkdir, rename, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { promisify } from "node:util";
-import { clamp, estimateSpeech, uid, type Provider, type Take } from "../shared/timeline.ts";
-import { elevenText, SPEED_MAX, SPEED_MIN, synthesizeEleven, voiceName } from "./elevenlabs.ts";
+import { clamp, ELEVEN_MUSIC_MODEL, ELEVEN_SFX_MODEL, estimateSpeech, uid, type ElevenMusicPlan, type MusicEngine, type Provider, type SfxInfo, type Take } from "../shared/timeline.ts";
+import { composeMusic, elevenText, generateSfx, SPEED_MAX, SPEED_MIN, synthesizeEleven, voiceName } from "./elevenlabs.ts";
 import { generateMusic, synthesize } from "./gemini.ts";
 import { fileVersion, probeDuration, projectFile, slugify, type Ctx } from "./projects.ts";
 import { sayToWav } from "./say.ts";
@@ -101,8 +102,26 @@ export async function makeTake(ctx: Ctx, project: string, r: TakeRequest): Promi
   };
 }
 
+export interface MusicRequest { engine?: MusicEngine; prompt: string; model?: string; plan?: ElevenMusicPlan | null; seconds?: number; name?: string }
+
+/** Generate a music track into audio/music, with the prompt (and plan) saved next to it.
+ *  Lyria takes a text prompt with a timed section map; ElevenLabs takes a sectioned composition plan
+ *  (or, without one, the prompt and a length). */
+export async function makeMusic(ctx: Ctx, project: string, r: MusicRequest) {
+  if (r.engine === "elevenlabs") {
+    const model = ELEVEN_MUSIC_MODEL;
+    const data = await composeMusic(r.plan ? { plan: r.plan, model } : { prompt: r.prompt, lengthMs: (r.seconds || 30) * 1000, model });
+    const rel = `audio/music/${slugify(r.name || "elevenlabs")}-${Date.now().toString(36)}.mp3`;
+    await mkdir(projectFile(ctx, project, "audio/music"), { recursive: true });
+    await writeFile(projectFile(ctx, project, rel), data);
+    await writeFile(projectFile(ctx, project, rel.replace(/\.\w+$/, ".txt")), `MODEL elevenlabs ${model}\n\nPROMPT\n${r.prompt}\n\nCOMPOSITION PLAN\n${r.plan ? JSON.stringify(r.plan, null, 2) : "(none: prompt and length)"}\n`);
+    return { asset: rel, duration: await probeDuration(projectFile(ctx, project, rel)), text: "" };
+  }
+  return makeLyria(ctx, project, r.prompt, r.model || "lyria-3.5", r.name || "lyria");
+}
+
 /** Generate a Lyria track into audio/music, with the prompt and model output saved next to it. */
-export async function makeMusic(ctx: Ctx, project: string, prompt: string, model: string, name = "lyria") {
+async function makeLyria(ctx: Ctx, project: string, prompt: string, model: string, name: string) {
   const r = await generateMusic(prompt, model);
   model = r.model; // Agent Platform may substitute lyria-3-pro-preview for lyria-3.5
   const rel = `audio/music/${slugify(name)}-${Date.now().toString(36)}.${r.ext}`;
@@ -110,6 +129,22 @@ export async function makeMusic(ctx: Ctx, project: string, prompt: string, model
   await writeFile(projectFile(ctx, project, rel), r.data);
   await writeFile(projectFile(ctx, project, rel.replace(/\.\w+$/, ".txt")), `MODEL ${model}\n\nPROMPT\n${prompt}\n\nMODEL OUTPUT\n${r.text}\n`);
   return { asset: rel, duration: await probeDuration(projectFile(ctx, project, rel)), text: r.text };
+}
+
+export interface SfxRequest { prompt: string; duration?: number | null; influence?: number | null; loop?: boolean; cue?: string; name?: string }
+
+/** Generate one ElevenLabs sound effect into audio/sfx. Returns the asset and an SfxInfo for the clip. */
+export async function makeSfx(ctx: Ctx, project: string, r: SfxRequest): Promise<{ asset: string; duration: number | null; sfx: SfxInfo }> {
+  const prompt = r.prompt.trim();
+  if (!prompt) throw new Error("Describe the sound effect.");
+  const data = await generateSfx({ text: prompt, duration: r.duration ?? null, influence: r.influence ?? null, loop: !!r.loop, model: ELEVEN_SFX_MODEL });
+  const rel = `audio/sfx/${slugify(r.name || prompt).slice(0, 40)}-${uid("").slice(0, 6)}.mp3`;
+  await mkdir(projectFile(ctx, project, "audio/sfx"), { recursive: true });
+  await writeFile(projectFile(ctx, project, rel), data);
+  return {
+    asset: rel, duration: await probeDuration(projectFile(ctx, project, rel)),
+    sfx: { prompt, ...(r.cue ? { cue: r.cue } : {}), duration: r.duration ?? null, influence: r.influence ?? null, model: ELEVEN_SFX_MODEL },
+  };
 }
 
 // ───────── time-stretch (clip rate) ─────────

@@ -37,7 +37,7 @@ Timing work is free: drafts use the macOS `say` voice. For the real voices and m
 - **An API key.** Run `cp .env.example .env` and set `GEMINI_API_KEY`.
 - **Google ADC**, for orgs that don't allow keys. Run `gcloud auth application-default login`. If the Gemini Developer API says no, Shot falls back to Agent Platform on its own. Settings are in [`.env.example`](.env.example).
 
-Prefer ElevenLabs? Set `ELEVENLABS_API_KEY` in `.env` too, then pick it under **Voiceover → Engine**. You get Eleven v3 with audio tags like `[whispers]`, and your own cloned voices. Music still comes from Lyria.
+Prefer ElevenLabs? Set `ELEVENLABS_API_KEY` in `.env` too, then pick it under **Voiceover → Engine**. You get Eleven v3 with audio tags like `[whispers]`, and your own cloned voices. The same key turns on ElevenLabs sound effects and ElevenLabs Music as a second music engine.
 
 Keys and tokens stay on your machine, in the local server.
 
@@ -78,7 +78,8 @@ npm run inspect -- <p>                # cut, scenes, audio, warnings
 npm run frame -- <p> 12.5             # PNG of one moment (--sheet for all of them)
 npm run compare -- <p> 12.5           # cloned from a video: film next to the original (--shot <id>, --sheet)
 npm run vo -- <p> [--draft] [--all]   # voice the lines (--engine elevenlabs to switch)
-npm run music -- <p> "mood"
+npm run music -- <p> "mood" [--engine elevenlabs]
+npm run sfx -- <p> "soft UI click" --at 5.3   # or --cues: every scene's sfx cue
 npm run render -- <p> [--draft]       # → exports/*.mp4
 npm run bundle -- <p>                 # → one self-contained HTML file
 npm run font -- <p> "Inter Tight:wght@100..900"   # bundle Google Fonts into the film (--text auto for CJK)

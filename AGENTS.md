@@ -10,7 +10,7 @@ Two kinds of work happen here. Find out which one you're doing first.
 - `npm run dev`: studio at http://localhost:5178 (Vite and the API in one process).
 - `npm run typecheck`: `tsc --noEmit` over `src/`, `server/`, `shared/` and `scripts/`. Run it before handing off.
 - `npm run build`: typecheck plus a production bundle of the UI.
-- CLI for films: `new`, `open`, `duplicate`, `inspect`, `frame`, `compare`, `vo`, `music`, `render`, `bundle`, `font`, `pack-skill` (see README).
+- CLI for films: `new`, `open`, `duplicate`, `inspect`, `frame`, `compare`, `vo`, `music`, `sfx`, `render`, `bundle`, `font`, `pack-skill` (see README).
 - `npm run style-gallery`: after changing a style preset or its example scene, rebuild the gallery and the picker covers. Look at the covers.
 
 ## Code map
@@ -24,7 +24,7 @@ Two kinds of work happen here. Find out which one you're doing first.
 | HTTP API (Vite middleware), static `/files/<project>/…` | `server/api.ts` |
 | Projects: registry (`~/.shot/projects.json`, projects anywhere on disk), scaffolding from `templates/project` (fills `{{TITLE}}`, `{{NAME}}`, `{{STUDIO}}`), timeline read/write with history, versions | `server/projects.ts` |
 | Gemini: API key or ADC (Developer API, then Agent Platform fallback); TTS, voice design, Lyria | `server/gemini.ts`, `server/media.ts` |
-| ElevenLabs (optional, `ELEVENLABS_API_KEY`): TTS with speed-based pacing, voice list | `server/elevenlabs.ts`, `server/media.ts` |
+| ElevenLabs (optional, `ELEVENLABS_API_KEY`): TTS with speed-based pacing, voice list, sound effects (`makeSfx`), music from a sectioned composition plan (`elevenMusicPlan` in `shared/timeline.ts`) | `server/elevenlabs.ts`, `server/media.ts`, `scripts/sfx.ts` |
 | Film templates: list, save (strips audio), cover render, apply to a new project | `server/templates.ts`, `templates/films/` |
 | Style presets: art direction (references, tokens, layout, type, motion, signature moves, don'ts) that becomes a project's `style.md`. Universal craft rules live in the "Design quality" section of `templates/project/AGENTS.md`; presets only add to them or change their numbers. Each has a worked example scene in `styles/gallery/film/scenes/` and a picker cover in `styles/previews/`, rebuilt by `npm run style-gallery` | `styles/`, `server/styles.ts`, `scripts/style-gallery.ts` |
 | Bundle Google Fonts into a film (woff2 plus `@font-face` in `film/styles.css`; Latin subset, or `--text` for any script) | `server/fonts.ts`, `scripts/font.ts` |

@@ -1,4 +1,4 @@
-import type { Aspect, DesignedVoice, Take, Timeline } from "../../shared/timeline.ts";
+import type { Aspect, DesignedVoice, SfxInfo, Take, Timeline } from "../../shared/timeline.ts";
 
 async function req<T>(method: string, url: string, body?: BodyInit | object, headers: Record<string, string> = {}): Promise<T> {
   const isRaw = body instanceof Blob || body instanceof ArrayBuffer || typeof body === "string";
@@ -65,8 +65,10 @@ export const api = {
   elevenVoices: (fresh = false) => req<ElevenVoice[]>("GET", `/api/elevenlabs/voices${fresh ? "?fresh=1" : ""}`),
   designVoice: (p: string, body: { name: string; description: string; model: string; gender?: string; language_code?: string }) =>
     req<{ voice: DesignedVoice }>("POST", `${P(p)}/voices`, body),
-  music: (p: string, body: { prompt: string; model: string; name: string }) =>
+  music: (p: string, body: { engine?: "lyria" | "elevenlabs"; prompt: string; model?: string; plan?: unknown; seconds?: number; name: string }) =>
     req<{ asset: string; duration: number | null; text: string }>("POST", `${P(p)}/music`, body),
+  sfx: (p: string, body: { prompt: string; duration?: number | null; influence?: number | null; loop?: boolean }) =>
+    req<{ asset: string; duration: number | null; sfx: SfxInfo }>("POST", `${P(p)}/sfx`, body),
   export: (p: string, mix: Blob | null, draft: boolean) => req<Job>("POST", `${P(p)}/export?draft=${draft ? 1 : 0}`, mix || new Blob([])),
   job: (id: string) => req<Job>("GET", `/api/jobs/${id}`),
   cancelJob: (id: string) => req("POST", `/api/jobs/${id}/cancel`),

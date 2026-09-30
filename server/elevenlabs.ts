@@ -1,4 +1,4 @@
-// ElevenLabs text-to-speech, optional: set ELEVENLABS_API_KEY in shot/.env (or ~/.shot/.env). The key stays here,
+// ElevenLabs text-to-speech, sound effects and music, optional: set ELEVENLABS_API_KEY in shot/.env (or ~/.shot/.env). The key stays here,
 // server-side. Reads come back as 24 kHz PCM and are wrapped as WAV like Gemini's.
 import { pcmToWav } from "./wav.ts";
 
@@ -81,4 +81,28 @@ export async function synthesizeEleven(r: ElevenRequest): Promise<{ wav: Buffer;
 export function elevenText(text: string, style: string, model: string) {
   const s = style.replace(/[[\]]/g, "").trim();
   return s && model === "eleven_v3" ? `[${s}] ${text}` : text;
+}
+
+// ───────── sound effects and music ─────────
+
+/** One sound effect from a text prompt (text-to-sound-effects). duration 0.5–30 s, or omitted to let the model
+ *  pick; influence 0–1 is how literally it follows the prompt (0.3 default). Returns 44.1 kHz MP3. */
+export async function generateSfx(r: { text: string; duration?: number | null; influence?: number | null; loop?: boolean; model?: string }): Promise<Buffer> {
+  const body: Record<string, unknown> = { text: r.text, model_id: r.model || "eleven_text_to_sound_v2" };
+  if (r.duration) body.duration_seconds = Math.min(30, Math.max(0.5, r.duration));
+  if (r.influence != null) body.prompt_influence = Math.min(1, Math.max(0, r.influence));
+  if (r.loop) body.loop = true;
+  const res = await call("/v1/sound-generation?output_format=mp3_44100_128", { method: "POST", body: JSON.stringify(body) });
+  return Buffer.from(await res.arrayBuffer());
+}
+
+/** An instrumental track: a sectioned composition plan (music_v1, section lengths respected) or a plain prompt
+ *  with a length. Returns 44.1 kHz MP3. */
+export async function composeMusic(r: { prompt?: string; plan?: unknown; lengthMs?: number; model?: string }): Promise<Buffer> {
+  const body: Record<string, unknown> = { model_id: r.model || "music_v1" };
+  // a plan stays instrumental through empty `lines` and negative styles; force_instrumental is prompt-only
+  if (r.plan) { body.composition_plan = r.plan; body.respect_sections_durations = true; }
+  else { body.prompt = r.prompt || ""; body.force_instrumental = true; if (r.lengthMs) body.music_length_ms = Math.min(600_000, Math.max(3000, Math.round(r.lengthMs))); }
+  const res = await call("/v1/music?output_format=mp3_44100_128", { method: "POST", body: JSON.stringify(body) });
+  return Buffer.from(await res.arrayBuffer());
 }

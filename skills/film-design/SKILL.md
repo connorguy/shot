@@ -36,7 +36,7 @@ If the environment can only produce one file (for example a chat artifact), inli
 
 ## Scene rules (non-negotiable)
 
-1. `film.scene({ id, label, section, start, end, beats?, vo?, notes? }, el => t => {...})`. The builder runs once and the returned `draw(t)` runs per frame.
+1. `film.scene({ id, label, section, start, end, beats?, vo?, sfx?, notes? }, el => t => {...})`. The builder runs once and the returned `draw(t)` runs per frame.
 2. **`draw(t)` depends only on `t`.** No `Date.now`, `performance.now`, `Math.random` (use `rng(seed)` from lib), CSS animations or transitions, `setTimeout`, or state carried between frames. Frames are rendered out of order and in parallel.
 3. **Set every animated property on every draw**, including before an entrance and after an exit.
 4. **Each scene has its own clock** (`start`–`end`, any numbers). The studio will retime, split, hold and reorder scenes, so a scene must look right at any `t` in its range, whatever came before.
@@ -49,6 +49,7 @@ If the environment can only produce one file (for example a chat artifact), inli
 - `section`: the brief's beat names ("Hook", "Problem", "Turn", "Proof", "Close"). The studio groups scenes by section and times Lyria music to sections.
 - `beats`: the internal moments of a scene (`[{ t: 12.0, label: 'Card lands' }]`). They show on timeline clips and become one-click split points.
 - `vo`: the draft voiceover line for the scene. The studio turns it into a VO line ready for Gemini TTS.
+- `sfx`: sound effects the scene asks for, on its clock (`[{ t: 12.0, prompt: 'soft UI click', duration: 0.4 }]`). `npm run sfx -- . --cues` generates them with ElevenLabs and pins each to its moment in the cut. Keep them few: one per real event (a click, a card landing), not one per animation.
 - `notes`: intent or open questions for whoever edits next.
 - `edit.js`: a default cut that plays the scenes at the intended pace (`{ scene, in?, out?, duration? | speed?, xfade? }`). It seeds the studio timeline and nothing more.
 

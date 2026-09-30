@@ -29,6 +29,7 @@
     "compare": "node scripts/compare.ts",
     "vo": "node scripts/vo.ts",
     "music": "node scripts/music.ts",
+    "sfx": "node scripts/sfx.ts",
     "render": "node scripts/render.ts",
     "bundle": "node scripts/bundle.ts",
     "font": "node scripts/font.ts",

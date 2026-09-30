@@ -9,7 +9,7 @@ import { thumbnail } from "./chrome.ts";
 import { cancelJob, getJob, hasFfmpeg, startExport } from "./export.ts";
 import { elevenAvailable, listVoices } from "./elevenlabs.ts";
 import { authStatus, designVoice } from "./gemini.ts";
-import { makeMusic, makeTake, stretched } from "./media.ts";
+import { makeMusic, makeSfx, makeTake, stretched } from "./media.ts";
 import { listStyles, stylePreview } from "./styles.ts";
 import { listTemplates, saveTemplate, templateDir } from "./templates.ts";
 import {
@@ -212,7 +212,14 @@ export function createApi(ctx: Ctx) {
 
   on("POST", /^\/api\/projects\/([^/]+)\/music$/, async (m, req, res) => {
     const b = await readJson(req);
-    send(res, 200, await makeMusic(ctx, m[1], String(b.prompt || ""), b.model, b.name || "lyria"));
+    const engine = b.engine === "elevenlabs" ? "elevenlabs" : "lyria";
+    send(res, 200, await makeMusic(ctx, m[1], { engine, prompt: String(b.prompt || ""), model: b.model, plan: b.plan || null, seconds: Number(b.seconds) || undefined, name: b.name || engine }));
+  });
+
+  // ElevenLabs sound effect: POST /api/projects/:p/sfx  { prompt, duration?, influence?, loop? }
+  on("POST", /^\/api\/projects\/([^/]+)\/sfx$/, async (m, req, res) => {
+    const b = await readJson(req);
+    send(res, 200, await makeSfx(ctx, m[1], { prompt: String(b.prompt || ""), duration: Number(b.duration) || null, influence: b.influence == null || b.influence === "" ? null : Number(b.influence), loop: !!b.loop }));
   });
 
   // export: POST /api/projects/:p/export?draft=1  (body = mixed WAV, may be empty for silent)

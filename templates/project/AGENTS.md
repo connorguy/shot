@@ -24,7 +24,7 @@ If that path no longer exists, Shot has moved: ask where it is now (it's the fol
 | `film/film-kit.js` | Vendored runtime (contract with the studio). | never; update by copying `{{STUDIO}}/film-kit/film-kit.js` |
 | `film/assets/` | Images and fonts, referenced by relative path (`film/assets/x.png`). | agents |
 | `timeline.json` | The edit: picture clips, audio tracks, VO lines and takes, voice settings. | studio, agents |
-| `audio/vo`, `audio/music`, `audio/sfx` | Generated takes, Lyria tracks, uploads. | tools |
+| `audio/vo`, `audio/music`, `audio/sfx` | Generated takes, Lyria or ElevenLabs tracks, ElevenLabs sound effects, uploads. | tools |
 | `exports/` | Rendered MP4s (+ the mixed WAV). Git-ignored. | tools |
 | `.history/` | Last 40 saves of `timeline.json`. Git-ignored. | tools |
 | `.frames/` | Stills from `frame` and `compare`. Git-ignored. | tools |
@@ -40,6 +40,7 @@ film.scene({
   start: 16.4, end: 18.1,      // the scene's own clock, in seconds
   beats: [{ t: 17.0, label: 'Line peaks' }], // optional split points shown on clips
   vo: 'Suggested voiceover.',  // optional; seeds a VO line on first open
+  sfx: [{ t: 17.0, prompt: 'soft UI click', duration: 0.4, gain: -6 }], // optional; `sfx -- . --cues` generates and pins them
   notes: 'Direction for humans and agents.',
 }, el => {
   // build once: create DOM under `el`, measure text, precompute
@@ -156,7 +157,8 @@ Each is `npm --prefix "{{STUDIO}}" run <command> -- . [options]` from this folde
 | `inspect -- .` | Scenes, clips with start/end/speed, VO lines and takes, plus warnings (missing or broken scenes, overlapping or overrunning VO). `--json` for machine output. |
 | `frame -- . 12.5` | PNG of timeline time 12.5 s, saved in `.frames/`. `--scene chart --at 17.2` renders one scene at its own time. `--sheet` renders a contact sheet, one frame per clip. Prints the file path, so look at it. |
 | `vo -- .` | Generate takes for VO lines without audio, with the project's engine (Gemini or ElevenLabs; `--engine` overrides, `--draft` uses free macOS `say`). `--all` regenerates every line; `--line vo_a1` one line. |
-| `music -- . "prompt"` | Lyria track timed to the current cut's sections, placed on the Music track. `--dry` prints the prompt only. |
+| `music -- . "prompt"` | Music track timed to the current cut's sections, placed on the Music track. Lyria by default; `--engine elevenlabs` sends ElevenLabs a composition plan with one section per cut section. `--dry` prints the prompt or plan only. |
+| `sfx -- . "prompt"` | One ElevenLabs sound effect on the SFX track: `--at 12.5` (timeline seconds) or `--clip c_x1 --offset 0.2` (pinned to a picture clip), `--duration 0.6`, `--influence 0.5` (how literally), `--gain -6`. `sfx -- . --cues` generates every scene's `sfx` cue and pins each to the picture clip that plays that moment; `--all` regenerates. |
 | `render -- .` | Full MP4 with the audio mix into `exports/`. `--draft` for 540p. Only when the user asks for one. |
 | `font -- . "Family:axes" …` | Downloads Google Fonts (css2 syntax, e.g. `"Inter Tight:wght@100..900"`) into `film/assets/fonts/` and writes their `@font-face` rules into `film/styles.css`. Films can't load fonts from the network at render time. Only the Latin subset is bundled unless you pass `--text auto`, which bundles exactly the characters the film uses, in any script (Japanese, symbols like → ❯). Run it again after the copy changes. |
 | `bundle -- .` | One self-contained HTML of the current cut (scripts, styles, fonts, images inlined) for sharing or a design chat. |
